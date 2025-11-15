@@ -48,7 +48,7 @@ export class BshClient {
                     Authorization: `Bearer ${auth.token}`
                 };
             }
-            else if (auth.type === 'API_KEY') {
+            else if (auth.type === 'APIKEY') {
                 authHeaders = {
                     'X-BSH-APIKEY': auth.token
                 };
