@@ -19,3 +19,8 @@ export type BshClientFnParams<T = unknown> = {
 }
 
 export type BshClientFn = <T = unknown>(params: BshClientFnParams<T>) => Promise<Response>;
+
+export type BshAuthFn = () => Promise<{
+    type: 'JWT' | 'API_KEY';
+    token: string
+}>;

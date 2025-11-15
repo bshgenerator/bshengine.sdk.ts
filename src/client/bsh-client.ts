@@ -1,10 +1,11 @@
 import { BshResponse, BshError } from "@types";
-import { BshClientFn, BshClientFnParams } from "@src/client/types";
+import { BshAuthFn, BshClientFn, BshClientFnParams } from "@src/client/types";
 
 export class BshClient {
     constructor(
         private readonly host: string,
-        private readonly httpClient: BshClientFn
+        private readonly httpClient: BshClientFn,
+        private readonly authFn?: BshAuthFn
     ) { }
 
     private async handleResponse<T = unknown>(response: Response, params: BshClientFnParams<T>, type: 'json'): Promise<BshResponse<T> | undefined>
@@ -38,70 +39,122 @@ export class BshClient {
         }
     }
 
+    private async getAuthHeaders(): Promise<Record<string, string>> {
+        const auth = this.authFn ? await this.authFn() : undefined;
+        let authHeaders = {};
+        if (auth) {
+            if (auth.type === 'JWT') {
+                authHeaders = {
+                    Authorization: `Bearer ${auth.token}`
+                };
+            }
+            else if (auth.type === 'API_KEY') {
+                authHeaders = {
+                    'X-BSH-APIKEY': auth.token
+                };
+            }
+        }
+        return authHeaders;
+    }
+
     async get<T = unknown>(params: BshClientFnParams<T>): Promise<BshResponse<T> | undefined> {
+        const authHeaders = await this.getAuthHeaders();
+
         const response = await this.httpClient({
             ...params,
             path: `${this.host}${params.path}`,
             options: {
                 ...params.options,
-                method: 'GET'
+                method: 'GET',
+                headers: {
+                    ...params.options.headers,
+                    ...authHeaders
+                }
             }
         });
         return this.handleResponse(response, params, 'json');
     }
 
     async post<T = unknown>(params: BshClientFnParams<T>): Promise<BshResponse<T> | undefined> {
+        const authHeaders = await this.getAuthHeaders();
         const response = await this.httpClient({
             ...params,
             path: `${this.host}${params.path}`,
             options: {
                 ...params.options,
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    ...params.options.headers,
+                    ...authHeaders
+                }
             }
         });
         return this.handleResponse(response, params, 'json');
     }
 
     async put<T = unknown>(params: BshClientFnParams<T>): Promise<BshResponse<T> | undefined> {
+        const authHeaders = await this.getAuthHeaders();
         const response = await this.httpClient({
             ...params,
             path: `${this.host}${params.path}`,
             options: {
                 ...params.options,
-                method: 'PUT'
+                method: 'PUT',
+                headers: {
+                    ...params.options.headers,
+                    ...authHeaders
+                }
             }
         });
         return this.handleResponse(response, params, 'json');
     }
 
     async delete<T = unknown>(params: BshClientFnParams<T>): Promise<BshResponse<T> | undefined> {
+        const authHeaders = await this.getAuthHeaders();
         const response = await this.httpClient({
             ...params,
             path: `${this.host}${params.path}`,
             options: {
                 ...params.options,
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    ...params.options.headers,
+                    ...authHeaders
+                }
             }
         });
         return this.handleResponse(response, params, 'json');
     }
 
     async patch<T = unknown>(params: BshClientFnParams<T>): Promise<BshResponse<T> | undefined> {
+        const authHeaders = await this.getAuthHeaders();
         const response = await this.httpClient({
             ...params,
             path: `${this.host}${params.path}`,
             options: {
                 ...params.options,
-                method: 'PATCH'
+                method: 'PATCH',
+                headers: {
+                    ...params.options.headers,
+                    ...authHeaders
+                }
             }
         });
         return this.handleResponse(response, params, 'json');
     }
 
     async download<T = unknown>(params: BshClientFnParams<T>): Promise<Blob | undefined> {
+        const authHeaders = await this.getAuthHeaders();
         const response = await this.httpClient({
             ...params,
-            path: `${this.host}${params.path}`
+            path: `${this.host}${params.path}`,
+            options: {
+                ...params.options,
+                headers: {
+                    ...params.options.headers,
+                    ...authHeaders
+                }
+            }
         });
         return this.handleResponse(response, params, 'blob');
     }

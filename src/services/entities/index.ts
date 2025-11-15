@@ -1,5 +1,6 @@
 import { BshClient } from "@src/client/bsh-client";
 import { BshError, BshResponse, BshSearch } from "@types";
+import { bshConfigs } from "@config";
 
 export type EntityFnParams<T = unknown, R = T> = {
     entity: string;
@@ -12,17 +13,15 @@ export class EntityService {
     private static instance: EntityService;
     private readonly client: BshClient;
     private readonly baseEndpoint = '/api/entities';
-    // private readonly authProvider: AuthProvider;
 
     private constructor(client: BshClient) {
         this.client = client;
     }
 
-    public static getInstance(client?: BshClient): EntityService {
+    public static getInstance(): EntityService {
         if (!EntityService.instance) {
-            if (!client) {
-                throw new Error('BshClient is required for EntityService initialization');
-            }
+            console.log('[LIB] bshConfigs.isConfigured()', bshConfigs.isConfigured());
+            const client = bshConfigs.createClient();
             EntityService.instance = new EntityService(client);
         }
         return EntityService.instance;

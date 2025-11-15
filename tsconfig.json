@@ -20,6 +20,7 @@
     "paths": {
       "@types": ["src/types"],
       "@client": ["src/client"],
+      "@config": ["src/config"],
       "@src/*": ["src/*"]
     }
   },
