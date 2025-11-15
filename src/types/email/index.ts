@@ -1,5 +1,4 @@
-import {BshObject, BshObjectPure} from "../core";
-import {BshConfigurations} from "../config";
+import {BshObject, BshObjectPure, BshConfigurations} from '@types';
 
 export type SentEmail = {
     Id: string;

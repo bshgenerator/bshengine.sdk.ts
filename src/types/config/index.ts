@@ -1,4 +1,4 @@
-import {BshObject} from "../core";
+import {BshObject} from "@types";
 
 export type BshConfigurations<T extends Record<string, unknown> = Record<string, unknown>> = {
     name: string;

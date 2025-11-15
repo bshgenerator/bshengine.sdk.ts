@@ -1,4 +1,4 @@
-import {BshObject, BshObjectPure} from "../core";
+import {BshObject, BshObjectPure} from '@types';
 
 export type BshEntities = {
     name: string

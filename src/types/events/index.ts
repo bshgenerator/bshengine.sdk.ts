@@ -1,4 +1,4 @@
-import {BshDate, BshObject, BshObjectPure, CoreEntities} from "../core";
+import {BshDate, BshObject, BshObjectPure} from '@types';
 
 export type BshEventLogs = {
     id: string
@@ -15,7 +15,7 @@ export type BshTrigger<Event = BshTriggerEvent> = {
     name: string
     displayName: string
     criteria?: string
-    entity: CoreEntities | string
+    entity: string
     action: ('READ' | 'INSERT' | 'UPDATE' | 'SEARCH' | 'DELETE' | 'COLUMNS' | 'EXPORT')[]
     events: Event[]
     enabled: boolean

@@ -1,5 +1,4 @@
-import {BshObject} from "../core";
-import {BshConfigurations} from "../config";
+import {BshObject, BshConfigurations} from '@types';
 
 export type StorageProvider = 'cloudinary';
 
@@ -13,19 +12,19 @@ export type StorageConfiguration = BshConfigurations & {
     cloudinary: CloudinaryConfig
 }
 
-export type BshFileType = {
-    "uri": string,
-    "folder": string,
-    "secureUri": string,
-    "tags"?: string[],
-    "assetId": string,
-    "bytes": 2468971,
-    "context"?: { [key: string]: string },
-    "publicId": string,
-    "fileId": string,
-    "width": number,
-    "height": number,
-    "format": string,
+export type BshFiles = {
+    uri: string,
+    folder: string,
+    secureUri: string,
+    tags?: string[],
+    assetId: string,
+    bytes: number,
+    context?: { [key: string]: string },
+    publicId: string,
+    fileId: string,
+    width: number,
+    height: number,
+    format: string,
 } & BshObject
 
 export type UploadOptions = {
@@ -44,7 +43,7 @@ export type UploadResponse = {
     context: { [key: string]: unknown }
 }
 
-export const formatFileSize = (file: BshFileType): string => {
+export const formatFileSize = (file: BshFiles): string => {
     if (!file?.bytes) return 'Unknown';
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(file.bytes) / Math.log(1024));

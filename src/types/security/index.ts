@@ -1,4 +1,4 @@
-import {BshDate, BshObject, BshObjectPure} from "../core";
+import {BshDate, BshObject, BshObjectPure} from '@types';
 
 export type BshUser = {
     userId: string
