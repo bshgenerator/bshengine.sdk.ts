@@ -1,5 +1,1 @@
-// Types
-export * from './types';
-
-// Client
-export * from './client';
+export const version = '0.0.1';
