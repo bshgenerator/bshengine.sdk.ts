@@ -76,7 +76,7 @@ describe('MailingService', () => {
         path: '/api/mailing/send',
         options: {
           responseType: 'json',
-          responseFormat: 'json',
+          requestFormat: 'json',
           body: mailingPayload,
           headers: {
             'Content-Type': 'application/json',
@@ -108,7 +108,7 @@ describe('MailingService', () => {
         path: '/api/mailing/send',
         options: {
           responseType: 'json',
-          responseFormat: 'json',
+          requestFormat: 'json',
           body: mailingPayload,
           headers: {
             'Content-Type': 'application/json',
