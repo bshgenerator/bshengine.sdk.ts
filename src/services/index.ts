@@ -8,6 +8,7 @@ import { ImageService } from './image';
 import { MailingService } from './mailing';
 import { BshUtilsService } from './utils';
 import { CachingService } from './caching';
+import { ApiKeyService } from './api-key';
 import { coreEntities } from './core';
 
 export type BshCallbackParams<T = unknown, R = T> = {
@@ -28,6 +29,7 @@ export * from './image';
 export * from './mailing';
 export * from './utils';
 export * from './caching';
+export * from './api-key';
 
 export const services = {
     entities: EntityService.getInstance(),
@@ -39,4 +41,5 @@ export const services = {
     mailing: MailingService.getInstance(),
     utils: BshUtilsService.getInstance(),
     caching: CachingService.getInstance(),
+    apiKey: ApiKeyService.getInstance()
 }
