@@ -107,7 +107,7 @@ describe('CoreEntityService', () => {
           const mockResponse = { data: [mockData], code: 201, status: 'Created', error: '' };
           mockPost.mockResolvedValue(mockResponse);
 
-          await entityService.create({ data: mockData });
+          await entityService.create({ payload: mockData });
 
           expect(mockPost).toHaveBeenCalledWith({
             path: `/api/entities/${entityName}`,
@@ -134,7 +134,7 @@ describe('CoreEntityService', () => {
           });
 
           const onSuccess = vi.fn();
-          await entityService.create({ data: mockData, onSuccess });
+          await entityService.create({ payload: mockData, onSuccess });
 
           expect(onSuccess).toHaveBeenCalledWith(mockResponse);
         });
@@ -146,7 +146,7 @@ describe('CoreEntityService', () => {
           const mockResponse = { data: mockDataArray, code: 201, status: 'Created', error: '' };
           mockPost.mockResolvedValue(mockResponse);
 
-          await entityService.createMany({ data: mockDataArray });
+          await entityService.createMany({ payload: mockDataArray });
 
           expect(mockPost).toHaveBeenCalledWith({
             path: `/api/entities/${entityName}/batch`,
@@ -169,7 +169,7 @@ describe('CoreEntityService', () => {
           const mockResponse = { data: [updatedData], code: 200, status: 'OK', error: '' };
           mockPut.mockResolvedValue(mockResponse);
 
-          await entityService.update({ data: updatedData });
+          await entityService.update({ payload: updatedData });
 
           expect(mockPut).toHaveBeenCalledWith({
             path: `/api/entities/${entityName}`,
@@ -195,7 +195,7 @@ describe('CoreEntityService', () => {
           const mockResponse = { data: mockDataArray, code: 200, status: 'OK', error: '' };
           mockPut.mockResolvedValue(mockResponse);
 
-          await entityService.updateMany({ data: mockDataArray });
+          await entityService.updateMany({ payload: mockDataArray });
 
           expect(mockPut).toHaveBeenCalledWith({
             path: `/api/entities/${entityName}/batch`,
@@ -223,7 +223,7 @@ describe('CoreEntityService', () => {
           const mockResponse = { data: [mockData], code: 200, status: 'OK', error: '' };
           mockPost.mockResolvedValue(mockResponse);
 
-          await entityService.search({ search: searchParams });
+          await entityService.search({ payload: searchParams });
 
           expect(mockPost).toHaveBeenCalledWith({
             path: `/api/entities/${entityName}/search`,
@@ -250,7 +250,7 @@ describe('CoreEntityService', () => {
           const mockResponse = { data: [{ effected: 5 }], code: 200, status: 'OK', error: '' };
           mockPost.mockResolvedValue(mockResponse);
 
-          await entityService.delete({ search: searchParams });
+          await entityService.delete({ payload: searchParams });
 
           expect(mockPost).toHaveBeenCalledWith({
             path: `/api/entities/${entityName}/delete`,
@@ -325,7 +325,7 @@ describe('CoreEntityService', () => {
 
           const onDownload = vi.fn();
           await entityService.export({
-            search: searchParams,
+            payload: searchParams,
             format: 'csv',
             onDownload,
           });
@@ -351,7 +351,7 @@ describe('CoreEntityService', () => {
           mockDownload.mockResolvedValue(mockBlob);
 
           await entityService.export({
-            search: searchParams,
+            payload: searchParams,
             format: 'json',
             filename: 'custom-export.json',
           });
@@ -376,7 +376,7 @@ describe('CoreEntityService', () => {
           mockDownload.mockResolvedValue(mockBlob);
 
           await entityService.export({
-            search: searchParams,
+            payload: searchParams,
             format: 'excel',
           });
 

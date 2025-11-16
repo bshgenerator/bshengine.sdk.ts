@@ -1,28 +1,19 @@
 import { BshClient } from "@src/client/bsh-client";
-import { BshError, BshResponse, BshSearch } from "@types";
+import { BshResponse, BshSearch } from "@types";
 import { bshConfigs } from "@config";
+import { BshCallbackParams, BshCallbackParamsWithPayload } from "@src/services";
 
-export type EntityCallbackParams<T = unknown, R = T> = {
-    onSuccess?: (response: BshResponse<R>) => void;
-    onDownload?: (blob: Blob) => void;
-    onError?: (error: BshError) => void;
-}
-
-export type EntityFnParams<T = unknown, R = T> = EntityCallbackParams<T, R> & {entity: string} 
+export type EntityFnParams<T = unknown, R = T> = BshCallbackParams<T, R> & { entity: string }
+export type EntityFnParamsWithPayload<T = unknown, R = T> = BshCallbackParamsWithPayload<T, R> & { entity: string }
 
 export class EntityService {
     private static instance: EntityService;
     private readonly baseEndpoint = '/api/entities';
 
     private constructor() {
-        // Private constructor to enforce singleton pattern
     }
 
-    /**
-     * Get the client instance, always using the current global configuration.
-     * This ensures that if global configs change, the service will use the updated configs.
-     */
-    private get client(): BshClient { // TODO: look for better way to get the client
+    private get client(): BshClient {
         return bshConfigs.createClient();
     }
 
@@ -31,14 +22,6 @@ export class EntityService {
             EntityService.instance = new EntityService();
         }
         return EntityService.instance;
-    }
-
-    /**
-     * Reset the singleton instance. Useful when global configs change
-     * and you want to ensure a fresh instance is created.
-     */
-    public static reset(): void {
-        EntityService.instance = undefined as any;
     }
 
     // Get a single entity by ID
@@ -58,14 +41,14 @@ export class EntityService {
 
     // Create a new entity
     public async create<T>(
-        params: EntityFnParams<T> & { data: T }
+        params: EntityFnParamsWithPayload<T>
     ): Promise<BshResponse<T> | undefined> {
         return this.client.post<T>({
             path: `${this.baseEndpoint}/${params.entity}`,
             options: {
                 responseType: 'json',
                 responseFormat: 'json',
-                body: params.data,
+                body: params.payload,
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -76,14 +59,14 @@ export class EntityService {
 
     // Create multiple entities in batch
     public async createMany<T>(
-        params: EntityFnParams<T> & { data: T[] }
+        params: EntityFnParamsWithPayload<T[], T>
     ): Promise<BshResponse<T> | undefined> {
         return this.client.post<T>({
             path: `${this.baseEndpoint}/${params.entity}/batch`,
             options: {
                 responseType: 'json',
                 responseFormat: 'json',
-                body: params.data,
+                body: params.payload,
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -94,14 +77,14 @@ export class EntityService {
 
     // Update an existing entity
     public async update<T>(
-        params: EntityFnParams<T> & { data: T }
+        params: EntityFnParamsWithPayload<T>
     ): Promise<BshResponse<T> | undefined> {
         return this.client.put<T>({
             path: `${this.baseEndpoint}/${params.entity}`,
             options: {
                 responseType: 'json',
                 responseFormat: 'json',
-                body: params.data,
+                body: params.payload,
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -112,14 +95,14 @@ export class EntityService {
 
     // Update multiple entities in batch
     public async updateMany<T>(
-        params: EntityFnParams<T> & { data: T[] }
+        params: EntityFnParamsWithPayload<T[], T>
     ): Promise<BshResponse<T> | undefined> {
         return this.client.put<T>({
             path: `${this.baseEndpoint}/${params.entity}/batch`,
             options: {
                 responseType: 'json',
                 responseFormat: 'json',
-                body: params.data,
+                body: params.payload,
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -130,14 +113,14 @@ export class EntityService {
 
     // Search for entities
     public async search<T>(
-        params: EntityFnParams<T> & { search: BshSearch<T> }
+        params: EntityFnParamsWithPayload<BshSearch<T>, T>
     ): Promise<BshResponse<T> | undefined> {
         return this.client.post<T>({
             path: `${this.baseEndpoint}/${params.entity}/search`,
             options: {
                 responseType: 'json',
                 responseFormat: 'json',
-                body: params.search,
+                body: params.payload,
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -148,14 +131,14 @@ export class EntityService {
 
     // Delete entities by search criteria
     public async delete<T>(
-        params: EntityFnParams<T, { effected: number }> & { search: BshSearch<T> }
+        params: EntityFnParamsWithPayload<BshSearch<T>, { effected: number }>
     ): Promise<BshResponse<{ effected: number }> | undefined> {
         return this.client.post<{ effected: number }>({
             path: `${this.baseEndpoint}/${params.entity}/delete`,
             options: {
                 responseType: 'json',
                 responseFormat: 'json',
-                body: params.search,
+                body: params.payload,
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -200,8 +183,7 @@ export class EntityService {
 
     // Export entities
     public async export<T>(
-        params: EntityFnParams<T, Blob> & {
-            search: BshSearch<T>,
+        params: EntityFnParamsWithPayload<BshSearch<T>, Blob> & {
             format: 'csv' | 'json' | 'excel',
             filename?: string,
         }
@@ -214,7 +196,7 @@ export class EntityService {
             options: {
                 responseType: 'blob',
                 responseFormat: 'json',
-                body: params.search,
+                body: params.payload,
                 headers: {
                     'Content-Type': 'application/json',
                 },

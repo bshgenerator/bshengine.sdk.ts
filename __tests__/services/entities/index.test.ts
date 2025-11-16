@@ -138,7 +138,7 @@ describe('EntityService', () => {
       const service = EntityService.getInstance();
       await service.create({
         entity: 'TestEntity',
-        data: mockData,
+        payload: mockData,
       });
 
       expect(mockPost).toHaveBeenCalledWith({
@@ -165,7 +165,7 @@ describe('EntityService', () => {
       const service = EntityService.getInstance();
       await service.createMany({
         entity: 'TestEntity',
-        data: mockData,
+        payload: mockData,
       });
 
       expect(mockPost).toHaveBeenCalledWith({
@@ -192,7 +192,7 @@ describe('EntityService', () => {
       const service = EntityService.getInstance();
       await service.update({
         entity: 'TestEntity',
-        data: mockData,
+        payload: mockData,
       });
 
       expect(mockPut).toHaveBeenCalledWith({
@@ -219,7 +219,7 @@ describe('EntityService', () => {
       const service = EntityService.getInstance();
       await service.updateMany({
         entity: 'TestEntity',
-        data: mockData,
+        payload: mockData,
       });
 
       expect(mockPut).toHaveBeenCalledWith({
@@ -251,7 +251,7 @@ describe('EntityService', () => {
       const service = EntityService.getInstance();
       await service.search({
         entity: 'TestEntity',
-        search: searchParams,
+        payload: searchParams,
       });
 
       expect(mockPost).toHaveBeenCalledWith({
@@ -282,7 +282,7 @@ describe('EntityService', () => {
       const service = EntityService.getInstance();
       await service.delete({
         entity: 'TestEntity',
-        search: searchParams,
+        payload: searchParams,
       });
 
       expect(mockPost).toHaveBeenCalledWith({
@@ -369,7 +369,7 @@ describe('EntityService', () => {
       const onDownload = vi.fn();
       await service.export({
         entity: 'TestEntity',
-        search: searchParams,
+        payload: searchParams,
         format: 'csv',
         onDownload,
       });
@@ -399,7 +399,7 @@ describe('EntityService', () => {
       const service = EntityService.getInstance();
       await service.export({
         entity: 'TestEntity',
-        search: searchParams,
+        payload: searchParams,
         format: 'json',
         filename: 'custom-export.json',
       });
@@ -428,7 +428,7 @@ describe('EntityService', () => {
       const service = EntityService.getInstance();
       await service.export({
         entity: 'TestEntity',
-        search: searchParams,
+        payload: searchParams,
         format: 'excel',
       });
 
@@ -447,7 +447,7 @@ describe('EntityService', () => {
       const service = EntityService.getInstance();
       await service.export({
         entity: 'TestEntity',
-        search: searchParams,
+        payload: searchParams,
         format: 'csv',
       });
 

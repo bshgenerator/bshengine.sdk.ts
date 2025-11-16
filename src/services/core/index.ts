@@ -1,4 +1,4 @@
-import { EntityCallbackParams, EntityService } from "@src/services";
+import { BshCallbackParams, BshCallbackParamsWithPayload, EntityService } from "@src/services";
 import { BshConfigurations, BshEmailTemplate, BshEntities, BshEventLogs, BshFiles, BshPolicy, BshResponse, BshRole, BshSchemas, BshSearch, BshTrigger, BshTriggerInstance, BshTypes, BshUser, SentEmail } from "@types";
 
 export const CoreEntities = {
@@ -36,71 +36,70 @@ export class CoreEntityService<T> {
     public constructor(private readonly entity: CoreEntities) {
     }
 
-    public async findById(params: EntityCallbackParams<T> & { id: string }): Promise<BshResponse<T> | undefined> {
+    public async findById(params: BshCallbackParams<T> & { id: string }): Promise<BshResponse<T> | undefined> {
         return this.entityService.findById({
             entity: this.entity,
             ...params,
         });
     }
 
-    public async create(params: EntityCallbackParams<T> & { data: T }): Promise<BshResponse<T> | undefined> {
+    public async create(params: BshCallbackParamsWithPayload<T>): Promise<BshResponse<T> | undefined> {
         return this.entityService.create({
             entity: this.entity,
             ...params,
         });
     }
 
-    public async createMany(params: EntityCallbackParams<T> & { data: T[] }): Promise<BshResponse<T> | undefined> {
+    public async createMany(params: BshCallbackParamsWithPayload<T[], T>): Promise<BshResponse<T> | undefined> {
         return this.entityService.createMany({
             entity: this.entity,
             ...params,
         });
     }
 
-    public async update(params: EntityCallbackParams<T> & { data: T }): Promise<BshResponse<T> | undefined> {
+    public async update(params: BshCallbackParamsWithPayload<T>): Promise<BshResponse<T> | undefined> {
         return this.entityService.update({
             entity: this.entity,
             ...params,
         });
     }
 
-    public async updateMany(params: EntityCallbackParams<T> & { data: T[] }): Promise<BshResponse<T> | undefined> {
+    public async updateMany(params: BshCallbackParamsWithPayload<T[], T>): Promise<BshResponse<T> | undefined> {
         return this.entityService.updateMany({
             entity: this.entity,
             ...params,
         });
     }
 
-    public async search(params: EntityCallbackParams<T> & { search: BshSearch<T> }): Promise<BshResponse<T> | undefined> {
+    public async search(params: BshCallbackParamsWithPayload<BshSearch<T>, T>): Promise<BshResponse<T> | undefined> {
         return this.entityService.search({
             entity: this.entity,
             ...params,
         });
     }
 
-    public async delete(params: EntityCallbackParams<T, { effected: number }> & { search: BshSearch<T> }): Promise<BshResponse<{ effected: number }> | undefined> {
+    public async delete(params: BshCallbackParamsWithPayload<BshSearch<T>, { effected: number }>): Promise<BshResponse<{ effected: number }> | undefined> {
         return this.entityService.delete({
             entity: this.entity,
             ...params,
         });
     }
 
-    public async deleteById(params: EntityCallbackParams<T, { effected: number }> & { id: string }): Promise<BshResponse<{ effected: number }> | undefined> {
+    public async deleteById(params: BshCallbackParams<T, { effected: number }> & { id: string }): Promise<BshResponse<{ effected: number }> | undefined> {
         return this.entityService.deleteById({
             entity: this.entity,
             ...params,
         });
     }
 
-    public async columns(params: EntityCallbackParams<unknown, { name: string; type: string }>): Promise<BshResponse<{ name: string; type: string }> | undefined> {
+    public async columns(params: BshCallbackParams<unknown, { name: string; type: string }>): Promise<BshResponse<{ name: string; type: string }> | undefined> {
         return this.entityService.columns({
             entity: this.entity,
             ...params,
         });
     }
 
-    public async export(params: EntityCallbackParams<T, Blob> & {
-        search: BshSearch<T>,
+    public async export(params: BshCallbackParamsWithPayload<BshSearch<T>, Blob> & {
         format: 'csv' | 'json' | 'excel',
         filename?: string,
     }): Promise<void> {
