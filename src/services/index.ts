@@ -14,3 +14,4 @@ export type BshCallbackParamsWithPayload<T = unknown, R = T> = BshCallbackParams
 export * from './entities';
 export * from './auth';
 export * from './user';
+export * from './settings';
