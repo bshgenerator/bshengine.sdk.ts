@@ -23,4 +23,4 @@ export type BshClientFn = <T = unknown>(params: BshClientFnParams<T>) => Promise
 export type BshAuthFn = () => Promise<{
     type: 'JWT' | 'APIKEY';
     token: string
-}>;
+} | undefined>;
