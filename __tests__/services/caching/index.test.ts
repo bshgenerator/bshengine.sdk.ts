@@ -208,19 +208,19 @@ describe('CachingService', () => {
   });
 
   describe('names', () => {
-    it('should call client.post with correct endpoint', async () => {
+    it('should call client.get with correct endpoint', async () => {
       const mockResponse = {
         data: ['cache-1', 'cache-2', 'cache-3'],
         code: 200,
         status: 'OK',
         error: '',
       };
-      mockPost.mockResolvedValue(mockResponse);
+      mockGet.mockResolvedValue(mockResponse);
 
       const cachingService = CachingService.getInstance();
       await cachingService.names({});
 
-      expect(mockPost).toHaveBeenCalledWith({
+      expect(mockGet).toHaveBeenCalledWith({
         path: '/api/caching/names',
         options: {
           responseType: 'json',
@@ -237,7 +237,7 @@ describe('CachingService', () => {
         status: 'OK',
         error: '',
       };
-      mockPost.mockImplementation(async (params: any) => {
+      mockGet.mockImplementation(async (params: any) => {
         if (params.bshOptions?.onSuccess) {
           params.bshOptions.onSuccess(mockResponse);
           return undefined;

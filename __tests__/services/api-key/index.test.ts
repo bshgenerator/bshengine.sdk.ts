@@ -205,7 +205,7 @@ describe('ApiKeyService', () => {
       await apiKeyService.revoke({ id });
 
       expect(mockDelete).toHaveBeenCalledWith({
-        path: '/api/api-keys/1',
+        path: '/api/api-keys/1/revoke',
         options: {
           responseType: 'json',
           requestFormat: 'json',
