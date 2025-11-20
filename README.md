@@ -1,4 +1,4 @@
-# @bshsolutions/engine
+# @bshsolutions/sdk
 
 TypeScript SDK for integrating with BSH Engine - a backend tool that allows you to create APIs for your application with minimal work.
 

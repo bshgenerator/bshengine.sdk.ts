@@ -1,7 +1,7 @@
 {
-  "name": "@bshsolutions/engine",
-  "version": "1.0.0",
-  "description": "BSH Engine TypeScript library for API services and utilities",
+  "name": "@bshsolutions/sdk",
+  "version": "0.0.1",
+  "description": "TypeScript SDK for integrating with BSH Engine - API services and utilities",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -51,9 +51,11 @@
   },
   "keywords": [
     "bsh",
-    "engine",
+    "bsh-engine",
+    "sdk",
     "api",
-    "typescript"
+    "typescript",
+    "client"
   ],
   "author": "",
   "license": "MIT",
