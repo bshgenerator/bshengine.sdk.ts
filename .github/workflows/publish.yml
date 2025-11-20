@@ -1,0 +1,63 @@
+name: Publish to npm
+
+# on:
+#   push:
+#     tags:
+#       - 'v*.*.*'
+#       - 'v*.*.*.*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build package
+        run: npm run build
+      
+      - name: Extract version from tag
+        id: tag_version
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          # Remove 'v' prefix to get version
+          VERSION=${TAG_NAME#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          # Check if it's a 3-part version (v*.*.*) or 4-part (v*.*.*.*)
+          if [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "is_latest=true" >> $GITHUB_OUTPUT
+            echo "npm_tag=latest" >> $GITHUB_OUTPUT
+          else
+            echo "is_latest=false" >> $GITHUB_OUTPUT
+            echo "npm_tag=$VERSION" >> $GITHUB_OUTPUT
+          fi
+        
+      - name: Update package.json version
+        run: |
+          npm version ${{ steps.tag_version.outputs.version }} --no-git-tag-version
+      
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          VERSION=${{ steps.tag_version.outputs.version }}
+          npm publish --tag $VERSION --access public
+          
+          # If it's a 3-part version, also tag as latest
+          if [ "${{ steps.tag_version.outputs.is_latest }}" == "true" ]; then
+            npm dist-tag add @bshsolutions/sdk@$VERSION latest
+          fi
