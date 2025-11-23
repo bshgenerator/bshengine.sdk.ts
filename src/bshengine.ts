@@ -1,10 +1,10 @@
-import { BshAuthFn, BshClient, BshClientFn } from "@client";
+import { BshAuthFn, BshClient, BshClientFn, fetchClientFn } from "@client";
 import { ApiKeyService, AuthService, BshUtilsService, CachingService, EntityService, ImageService, MailingService, SettingsService, UserService } from "@src/services";
 import { BshEntities, BshPolicy,BshRole, BshEmailTemplate, BshEventLogs, BshSchemas, BshTypes, BshUser, SentEmail, BshTrigger, BshTriggerInstance, BshFiles, BshConfigurations } from "@types";
 
 export class BshEngine {
     private host?: string;
-    private clientFn?: BshClientFn;
+    private clientFn: BshClientFn = fetchClientFn;
     private authFn?: BshAuthFn;
 
     public withHost(hostFn: string) {
