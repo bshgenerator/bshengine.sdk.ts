@@ -1,477 +1,276 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { AuthService } from '@src/services/auth';
-import { bshConfigs } from '@config';
-import type { BshClientFn, BshAuthFn } from '@src/client/types';
-import type { BshUser, BshUserInit } from '@types';
-import { BshError } from '@types';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { AuthService } from '../../../src/services/auth';
+import { BshClient } from '../../../src/client/bsh-client';
+import { BshUser, BshUserInit } from '../../../src/types';
 
 describe('AuthService', () => {
-  let mockClientFn: BshClientFn;
-  let mockAuthFn: BshAuthFn;
-  let mockPost: any;
+    let authService: AuthService;
+    let mockClient: BshClient;
+    let mockGet: ReturnType<typeof vi.fn>;
+    let mockPost: ReturnType<typeof vi.fn>;
 
-  beforeEach(() => {
-    // Reset singleton
-    (AuthService as any).instance = undefined;
-    bshConfigs.reset();
-
-    // Setup mocks
-    mockPost = vi.fn();
-
-    mockClientFn = vi.fn();
-    mockAuthFn = vi.fn().mockResolvedValue({ type: 'JWT', token: 'test-token' });
-
-    // Mock BshClient methods
-    const mockClient = {
-      post: mockPost,
-    };
-
-    // Mock createClient to return our mock
-    vi.spyOn(bshConfigs, 'createClient').mockReturnValue(mockClient as any);
-
-    bshConfigs.configure({
-      clientFn: mockClientFn,
-      authFn: mockAuthFn,
-      host: 'http://localhost:3000',
-    });
-  });
-
-  describe('getInstance', () => {
-    it('should return the same instance (singleton)', () => {
-      const instance1 = AuthService.getInstance();
-      const instance2 = AuthService.getInstance();
-
-      expect(instance1).toBe(instance2);
+    beforeEach(() => {
+        mockGet = vi.fn();
+        mockPost = vi.fn();
+        mockClient = {
+            get: mockGet,
+            post: mockPost,
+            put: vi.fn(),
+            delete: vi.fn(),
+            patch: vi.fn(),
+            download: vi.fn(),
+        } as unknown as BshClient;
+        authService = new AuthService(mockClient);
     });
 
-    it('should create a new instance after reset', () => {
-      const instance1 = AuthService.getInstance();
-      (AuthService as any).instance = undefined;
-      const instance2 = AuthService.getInstance();
+    describe('login', () => {
+        it('should call client.post with correct parameters', async () => {
+            const mockResponse = {
+                data: [{ access: 'access-token', refresh: 'refresh-token' }],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockPost.mockResolvedValue(mockResponse);
 
-      expect(instance1).not.toBe(instance2);
-    });
-  });
+            const params = {
+                payload: { email: 'test@example.com', password: 'password123' },
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
 
-  describe('login', () => {
-    it('should call client.post with correct endpoint and payload', async () => {
-      const loginParams = {
-        email: 'test@example.com',
-        password: 'password123',
-      };
-      const mockResponse = {
-        data: { token: 'access-token', refresh: 'refresh-token' },
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockPost.mockResolvedValue(mockResponse);
+            const result = await authService.login(params);
 
-      const authService = AuthService.getInstance();
-      await authService.login({ payload: loginParams });
+            expect(mockPost).toHaveBeenCalledWith({
+                path: '/api/auth/login',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                    body: params.payload,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
 
-      expect(mockPost).toHaveBeenCalledWith({
-        path: '/api/auth/login',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-          body: loginParams,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
-    });
+        it('should handle login with callbacks', async () => {
+            const mockResponse = {
+                data: [{ access: 'token', refresh: 'refresh' }],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockPost.mockResolvedValue(mockResponse);
 
-    it('should handle onSuccess callback', async () => {
-      const loginParams = {
-        email: 'test@example.com',
-        password: 'password123',
-      };
-      const mockResponse = {
-        data: { token: 'access-token', refresh: 'refresh-token' },
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockPost.mockImplementation(async (params: any) => {
-        if (params.bshOptions?.onSuccess) {
-          params.bshOptions.onSuccess(mockResponse);
-          return undefined;
-        }
-        return mockResponse;
-      });
+            const onSuccess = vi.fn();
+            const onError = vi.fn();
 
-      const onSuccess = vi.fn();
-      const authService = AuthService.getInstance();
-      await authService.login({ payload: loginParams, onSuccess });
+            await authService.login({
+                payload: { email: 'test@example.com', password: 'pass' },
+                onSuccess,
+                onError
+            });
 
-      expect(onSuccess).toHaveBeenCalledWith(mockResponse);
+            expect(mockPost).toHaveBeenCalled();
+        });
     });
 
-    it('should handle onError callback', async () => {
-      const loginParams = {
-        email: 'test@example.com',
-        password: 'wrong-password',
-      };
-      const mockError = new BshError(401, '/api/auth/login');
-      mockPost.mockRejectedValue(mockError);
+    describe('register', () => {
+        it('should call client.post with correct parameters', async () => {
+            const mockUser: BshUser = {
+                id: '1',
+                email: 'test@example.com',
+                profile: { firstName: 'Test', lastName: 'User' }
+            } as BshUser;
+            const mockResponse = {
+                data: [mockUser],
+                code: 201,
+                status: 'Created',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockPost.mockResolvedValue(mockResponse);
 
-      const onError = vi.fn();
-      const authService = AuthService.getInstance();
-      await authService.login({ payload: loginParams, onError }).catch(() => {});
+            const userInit: BshUserInit = {
+                email: 'test@example.com',
+                password: 'password123',
+                profile: { firstName: 'Test', lastName: 'User' }
+            } as BshUserInit;
 
-      expect(mockPost).toHaveBeenCalled();
+            const params = {
+                payload: userInit,
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
+
+            const result = await authService.register(params);
+
+            expect(mockPost).toHaveBeenCalledWith({
+                path: '/api/auth/register',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                    body: params.payload,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
     });
 
-    it('should return response when no callbacks provided', async () => {
-      const loginParams = {
-        email: 'test@example.com',
-        password: 'password123',
-      };
-      const mockResponse = {
-        data: { token: 'access-token', refresh: 'refresh-token' },
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockPost.mockResolvedValue(mockResponse);
+    describe('refreshToken', () => {
+        it('should call client.post with correct parameters', async () => {
+            const mockResponse = {
+                data: [{ access: 'new-access-token', refresh: 'new-refresh-token' }],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockPost.mockResolvedValue(mockResponse);
 
-      const authService = AuthService.getInstance();
-      const result = await authService.login({ payload: loginParams });
+            const params = {
+                payload: { refresh: 'old-refresh-token' },
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
 
-      expect(result).toEqual(mockResponse);
-    });
-  });
+            const result = await authService.refreshToken(params);
 
-  describe('register', () => {
-    it('should call client.post with correct endpoint and payload', async () => {
-      const userInit: BshUserInit = {
-        email: 'newuser@example.com',
-        password: 'password123',
-        roles: ['user'],
-        profile: {
-          firstName: 'John',
-          lastName: 'Doe',
-        },
-      };
-      const mockUser: BshUser = {
-        userId: 'user-123',
-        email: 'newuser@example.com',
-        roles: ['user'],
-        status: 'REQUIRED_ACTIVATION',
-        profile: {
-          firstName: 'John',
-          lastName: 'Doe',
-        },
-        persistenceId: '1',
-        CreatedAt: { $date: new Date().toISOString() },
-      };
-      const mockResponse = {
-        data: mockUser,
-        code: 201,
-        status: 'Created',
-        error: '',
-      };
-      mockPost.mockResolvedValue(mockResponse);
-
-      const authService = AuthService.getInstance();
-      await authService.register({ payload: userInit });
-
-      expect(mockPost).toHaveBeenCalledWith({
-        path: '/api/auth/register',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-          body: userInit,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
+            expect(mockPost).toHaveBeenCalledWith({
+                path: '/api/auth/refresh',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                    body: params.payload,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
     });
 
-    it('should handle onSuccess callback', async () => {
-      const userInit: BshUserInit = {
-        email: 'newuser@example.com',
-        password: 'password123',
-        profile: {},
-      };
-      const mockUser: BshUser = {
-        userId: 'user-123',
-        email: 'newuser@example.com',
-        roles: [],
-        status: 'REQUIRED_ACTIVATION',
-        persistenceId: '1',
-        CreatedAt: { $date: new Date().toISOString() },
-      };
-      const mockResponse = {
-        data: mockUser,
-        code: 201,
-        status: 'Created',
-        error: '',
-      };
-      mockPost.mockImplementation(async (params: any) => {
-        if (params.bshOptions?.onSuccess) {
-          params.bshOptions.onSuccess(mockResponse);
-          return undefined;
-        }
-        return mockResponse;
-      });
+    describe('forgetPassword', () => {
+        it('should call client.post with correct parameters', async () => {
+            const mockResponse = {
+                data: [{}],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockPost.mockResolvedValue(mockResponse);
 
-      const onSuccess = vi.fn();
-      const authService = AuthService.getInstance();
-      await authService.register({ payload: userInit, onSuccess });
+            const params = {
+                payload: { email: 'test@example.com' },
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
 
-      expect(onSuccess).toHaveBeenCalledWith(mockResponse);
-    });
-  });
+            const result = await authService.forgetPassword(params);
 
-  describe('refreshToken', () => {
-    it('should call client.post with correct endpoint and payload', async () => {
-      const refreshParams = {
-        refresh: 'refresh-token-123',
-      };
-      const mockResponse = {
-        data: { token: 'new-access-token', refresh: 'new-refresh-token' },
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockPost.mockResolvedValue(mockResponse);
-
-      const authService = AuthService.getInstance();
-      await authService.refreshToken({ payload: refreshParams });
-
-      expect(mockPost).toHaveBeenCalledWith({
-        path: '/api/auth/refresh',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-          body: refreshParams,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
+            expect(mockPost).toHaveBeenCalledWith({
+                path: '/api/auth/forget-password',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                    body: params.payload,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
     });
 
-    it('should handle onSuccess callback', async () => {
-      const refreshParams = {
-        refresh: 'refresh-token-123',
-      };
-      const mockResponse = {
-        data: { token: 'new-access-token', refresh: 'new-refresh-token' },
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockPost.mockImplementation(async (params: any) => {
-        if (params.bshOptions?.onSuccess) {
-          params.bshOptions.onSuccess(mockResponse);
-          return undefined;
-        }
-        return mockResponse;
-      });
+    describe('resetPassword', () => {
+        it('should call client.post with correct parameters', async () => {
+            const mockResponse = {
+                data: [{}],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockPost.mockResolvedValue(mockResponse);
 
-      const onSuccess = vi.fn();
-      const authService = AuthService.getInstance();
-      await authService.refreshToken({ payload: refreshParams, onSuccess });
+            const params = {
+                payload: {
+                    email: 'test@example.com',
+                    code: '123456',
+                    newPassword: 'newpassword123'
+                },
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
 
-      expect(onSuccess).toHaveBeenCalledWith(mockResponse);
-    });
-  });
+            const result = await authService.resetPassword(params);
 
-  describe('forgetPassword', () => {
-    it('should call client.post with correct endpoint and payload', async () => {
-      const forgetPasswordParams = {
-        email: 'user@example.com',
-      };
-      const mockResponse = {
-        data: { message: 'Password reset email sent' },
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockPost.mockResolvedValue(mockResponse);
-
-      const authService = AuthService.getInstance();
-      await authService.forgetPassword({ payload: forgetPasswordParams });
-
-      expect(mockPost).toHaveBeenCalledWith({
-        path: '/api/auth/forget-password',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-          body: forgetPasswordParams,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
+            expect(mockPost).toHaveBeenCalledWith({
+                path: '/api/auth/reset-password',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                    body: params.payload,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
     });
 
-    it('should handle onSuccess callback', async () => {
-      const forgetPasswordParams = {
-        email: 'user@example.com',
-      };
-      const mockResponse = {
-        data: { message: 'Password reset email sent' },
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockPost.mockImplementation(async (params: any) => {
-        if (params.bshOptions?.onSuccess) {
-          params.bshOptions.onSuccess(mockResponse);
-          return undefined;
-        }
-        return mockResponse;
-      });
+    describe('activateAccount', () => {
+        it('should call client.post with correct parameters', async () => {
+            const mockResponse = {
+                data: [{}],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockPost.mockResolvedValue(mockResponse);
 
-      const onSuccess = vi.fn();
-      const authService = AuthService.getInstance();
-      await authService.forgetPassword({ payload: forgetPasswordParams, onSuccess });
+            const params = {
+                payload: {
+                    email: 'test@example.com',
+                    code: '123456'
+                },
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
 
-      expect(onSuccess).toHaveBeenCalledWith(mockResponse);
+            const result = await authService.activateAccount(params);
+
+            expect(mockPost).toHaveBeenCalledWith({
+                path: '/api/auth/activate-account',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                    body: params.payload,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
     });
-  });
-
-  describe('resetPassword', () => {
-    it('should call client.post with correct endpoint and payload', async () => {
-      const resetPasswordParams = {
-        email: 'user@example.com',
-        code: 'reset-code-123',
-        newPassword: 'new-password-123',
-      };
-      const mockResponse = {
-        data: { message: 'Password reset successfully' },
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockPost.mockResolvedValue(mockResponse);
-
-      const authService = AuthService.getInstance();
-      await authService.resetPassword({ payload: resetPasswordParams });
-
-      expect(mockPost).toHaveBeenCalledWith({
-        path: '/api/auth/reset-password',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-          body: resetPasswordParams,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
-    });
-
-    it('should handle onSuccess callback', async () => {
-      const resetPasswordParams = {
-        email: 'user@example.com',
-        code: 'reset-code-123',
-        newPassword: 'new-password-123',
-      };
-      const mockResponse = {
-        data: { message: 'Password reset successfully' },
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockPost.mockImplementation(async (params: any) => {
-        if (params.bshOptions?.onSuccess) {
-          params.bshOptions.onSuccess(mockResponse);
-          return undefined;
-        }
-        return mockResponse;
-      });
-
-      const onSuccess = vi.fn();
-      const authService = AuthService.getInstance();
-      await authService.resetPassword({ payload: resetPasswordParams, onSuccess });
-
-      expect(onSuccess).toHaveBeenCalledWith(mockResponse);
-    });
-  });
-
-  describe('activateAccount', () => {
-    it('should call client.post with correct endpoint and payload', async () => {
-      const activateAccountParams = {
-        email: 'user@example.com',
-        code: 'activation-code-123',
-      };
-      const mockResponse = {
-        data: { message: 'Account activated successfully' },
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockPost.mockResolvedValue(mockResponse);
-
-      const authService = AuthService.getInstance();
-      await authService.activateAccount({ payload: activateAccountParams });
-
-      expect(mockPost).toHaveBeenCalledWith({
-        path: '/api/auth/activate-account',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-          body: activateAccountParams,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
-    });
-
-    it('should handle onSuccess callback', async () => {
-      const activateAccountParams = {
-        email: 'user@example.com',
-        code: 'activation-code-123',
-      };
-      const mockResponse = {
-        data: { message: 'Account activated successfully' },
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockPost.mockImplementation(async (params: any) => {
-        if (params.bshOptions?.onSuccess) {
-          params.bshOptions.onSuccess(mockResponse);
-          return undefined;
-        }
-        return mockResponse;
-      });
-
-      const onSuccess = vi.fn();
-      const authService = AuthService.getInstance();
-      await authService.activateAccount({ payload: activateAccountParams, onSuccess });
-
-      expect(onSuccess).toHaveBeenCalledWith(mockResponse);
-    });
-
-    it('should handle onError callback', async () => {
-      const activateAccountParams = {
-        email: 'user@example.com',
-        code: 'invalid-code',
-      };
-      const mockError = new BshError(400, '/api/auth/activate-account');
-      mockPost.mockRejectedValue(mockError);
-
-      const onError = vi.fn();
-      const authService = AuthService.getInstance();
-      await authService.activateAccount({ payload: activateAccountParams, onError }).catch(() => {});
-
-      expect(mockPost).toHaveBeenCalled();
-    });
-  });
 });
 

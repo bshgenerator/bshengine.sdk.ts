@@ -1,429 +1,300 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ApiKeyService } from '@src/services/api-key';
-import { bshConfigs } from '@config';
-import type { BshClientFn, BshAuthFn } from '@src/client/types';
-import type { BshApiKeys, BshApiKeysForm, BshSearch } from '@types';
-import { BshError } from '@types';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { ApiKeyService } from '../../../src/services/api-key';
+import { BshClient } from '../../../src/client/bsh-client';
+import { BshApiKeys, BshApiKeysForm, BshSearch } from '../../../src/types';
 
 describe('ApiKeyService', () => {
-  let mockClientFn: BshClientFn;
-  let mockAuthFn: BshAuthFn;
-  let mockGet: any;
-  let mockPost: any;
-  let mockDelete: any;
+    let apiKeyService: ApiKeyService;
+    let mockClient: BshClient;
+    let mockGet: ReturnType<typeof vi.fn>;
+    let mockPost: ReturnType<typeof vi.fn>;
+    let mockDelete: ReturnType<typeof vi.fn>;
 
-  beforeEach(() => {
-    // Reset singleton
-    (ApiKeyService as any).instance = undefined;
-    bshConfigs.reset();
-
-    // Setup mocks
-    mockGet = vi.fn();
-    mockPost = vi.fn();
-    mockDelete = vi.fn();
-
-    mockClientFn = vi.fn();
-    mockAuthFn = vi.fn().mockResolvedValue({ type: 'JWT', token: 'test-token' });
-
-    // Mock BshClient methods
-    const mockClient = {
-      get: mockGet,
-      post: mockPost,
-      delete: mockDelete,
-    };
-
-    // Mock createClient to return our mock
-    vi.spyOn(bshConfigs, 'createClient').mockReturnValue(mockClient as any);
-
-    bshConfigs.configure({
-      clientFn: mockClientFn,
-      authFn: mockAuthFn,
-      host: 'http://localhost:3000',
-    });
-  });
-
-  describe('getInstance', () => {
-    it('should return the same instance (singleton)', () => {
-      const instance1 = ApiKeyService.getInstance();
-      const instance2 = ApiKeyService.getInstance();
-
-      expect(instance1).toBe(instance2);
+    beforeEach(() => {
+        mockGet = vi.fn();
+        mockPost = vi.fn();
+        mockDelete = vi.fn();
+        mockClient = {
+            get: mockGet,
+            post: mockPost,
+            put: vi.fn(),
+            delete: mockDelete,
+            patch: vi.fn(),
+            download: vi.fn(),
+        } as unknown as BshClient;
+        apiKeyService = new ApiKeyService(mockClient);
     });
 
-    it('should create a new instance after reset', () => {
-      const instance1 = ApiKeyService.getInstance();
-      (ApiKeyService as any).instance = undefined;
-      const instance2 = ApiKeyService.getInstance();
+    describe('create', () => {
+        it('should call client.post with correct parameters', async () => {
+            const mockApiKey: BshApiKeys = { id: '1', name: 'Test Key' } as BshApiKeys;
+            const mockResponse = {
+                data: [mockApiKey],
+                code: 201,
+                status: 'Created',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockPost.mockResolvedValue(mockResponse);
 
-      expect(instance1).not.toBe(instance2);
-    });
-  });
+            const payload: BshApiKeysForm = { name: 'Test Key' } as BshApiKeysForm;
+            const params = {
+                payload,
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
 
-  describe('create', () => {
-    it('should call client.post with correct endpoint and payload', async () => {
-      const apiKeyForm: BshApiKeysForm = {
-        name: 'Test API Key',
-        description: 'Test description',
-        duration: 3600,
-        type: 'PERSONAL',
-        scopes: ['BshUsers:READ', 'BshUsers:WRITE'],
-      };
-      const mockApiKey: BshApiKeys = {
-        ...apiKeyForm,
-        id: 1,
-        apiKey: 'test-api-key-123',
-        startedAt: { $date: new Date().toISOString() },
-        status: 'ACTIVE',
-        persistenceId: '1',
-        CreatedAt: { $date: new Date().toISOString() },
-      };
-      const mockResponse = {
-        data: [mockApiKey],
-        code: 201,
-        status: 'Created',
-        error: '',
-      };
-      mockPost.mockResolvedValue(mockResponse);
+            const result = await apiKeyService.create(params);
 
-      const apiKeyService = ApiKeyService.getInstance();
-      await apiKeyService.create({ payload: apiKeyForm });
-
-      expect(mockPost).toHaveBeenCalledWith({
-        path: '/api/api-keys',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-          body: apiKeyForm,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
+            expect(mockPost).toHaveBeenCalledWith({
+                path: '/api/api-keys',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                    body: payload,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
     });
 
-    it('should handle onSuccess callback', async () => {
-      const apiKeyForm: BshApiKeysForm = {
-        name: 'Test API Key',
-        duration: 3600,
-        type: 'MACHINE',
-        scopes: [],
-      };
-      const mockApiKey: BshApiKeys = {
-        ...apiKeyForm,
-        id: 1,
-        apiKey: 'test-api-key-123',
-        startedAt: { $date: new Date().toISOString() },
-        status: 'ACTIVE',
-        persistenceId: '1',
-        CreatedAt: { $date: new Date().toISOString() },
-      };
-      const mockResponse = {
-        data: [mockApiKey],
-        code: 201,
-        status: 'Created',
-        error: '',
-      };
-      mockPost.mockImplementation(async (params: any) => {
-        if (params.bshOptions?.onSuccess) {
-          params.bshOptions.onSuccess(mockResponse);
-          return undefined;
-        }
-        return mockResponse;
-      });
+    describe('details', () => {
+        it('should call client.get with correct parameters', async () => {
+            const mockApiKey: BshApiKeys = { id: '1', name: 'Test Key' } as BshApiKeys;
+            const mockResponse = {
+                data: [mockApiKey],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockGet.mockResolvedValue(mockResponse);
 
-      const onSuccess = vi.fn();
-      const apiKeyService = ApiKeyService.getInstance();
-      await apiKeyService.create({ payload: apiKeyForm, onSuccess });
+            const params = {
+                id: 1,
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
 
-      expect(onSuccess).toHaveBeenCalledWith(mockResponse);
-    });
-  });
+            const result = await apiKeyService.details(params);
 
-  describe('details', () => {
-    it('should call client.get with correct endpoint', async () => {
-      const id = 1;
-      const mockApiKey: BshApiKeys = {
-        id: 1,
-        name: 'Test API Key',
-        description: 'Test description',
-        duration: 3600,
-        type: 'PERSONAL',
-        scopes: ['BshUsers:READ'],
-        apiKey: 'test-api-key-123',
-        startedAt: { $date: new Date().toISOString() },
-        status: 'ACTIVE',
-        persistenceId: '1',
-        CreatedAt: { $date: new Date().toISOString() },
-      };
-      const mockResponse = {
-        data: [mockApiKey],
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockGet.mockResolvedValue(mockResponse);
-
-      const apiKeyService = ApiKeyService.getInstance();
-      await apiKeyService.details({ id });
-
-      expect(mockGet).toHaveBeenCalledWith({
-        path: '/api/api-keys/1',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
-    });
-  });
-
-  describe('revoke', () => {
-    it('should call client.delete with correct endpoint', async () => {
-      const id = 1;
-      const mockApiKey: BshApiKeys = {
-        id: 1,
-        name: 'Test API Key',
-        duration: 3600,
-        type: 'PERSONAL',
-        scopes: [],
-        apiKey: 'test-api-key-123',
-        startedAt: { $date: new Date().toISOString() },
-        status: 'REVOKED',
-        persistenceId: '1',
-        CreatedAt: { $date: new Date().toISOString() },
-      };
-      const mockResponse = {
-        data: [mockApiKey],
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockDelete.mockResolvedValue(mockResponse);
-
-      const apiKeyService = ApiKeyService.getInstance();
-      await apiKeyService.revoke({ id });
-
-      expect(mockDelete).toHaveBeenCalledWith({
-        path: '/api/api-keys/1/revoke',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
-    });
-  });
-
-  describe('getById', () => {
-    it('should call client.get with correct endpoint', async () => {
-      const id = 'api-key-123';
-      const mockApiKey: BshApiKeys = {
-        id: 1,
-        name: 'Test API Key',
-        duration: 3600,
-        type: 'PERSONAL',
-        scopes: [],
-        apiKey: 'test-api-key-123',
-        startedAt: { $date: new Date().toISOString() },
-        status: 'ACTIVE',
-        persistenceId: '1',
-        CreatedAt: { $date: new Date().toISOString() },
-      };
-      const mockResponse = {
-        data: [mockApiKey],
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockGet.mockResolvedValue(mockResponse);
-
-      const apiKeyService = ApiKeyService.getInstance();
-      await apiKeyService.getById({ id });
-
-      expect(mockGet).toHaveBeenCalledWith({
-        path: '/api/api-keys/api-key-123',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
-    });
-  });
-
-  describe('search', () => {
-    it('should call client.post with correct endpoint and payload', async () => {
-      const searchParams: BshSearch<BshApiKeys> = {
-        filters: [
-          {
-            field: 'name',
-            operator: 'eq',
-            value: 'Test API Key',
-          },
-        ],
-      };
-      const mockApiKey: BshApiKeys = {
-        id: 1,
-        name: 'Test API Key',
-        duration: 3600,
-        type: 'PERSONAL',
-        scopes: [],
-        apiKey: 'test-api-key-123',
-        startedAt: { $date: new Date().toISOString() },
-        status: 'ACTIVE',
-        persistenceId: '1',
-        CreatedAt: { $date: new Date().toISOString() },
-      };
-      const mockResponse = {
-        data: [mockApiKey],
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockPost.mockResolvedValue(mockResponse);
-
-      const apiKeyService = ApiKeyService.getInstance();
-      await apiKeyService.search({ payload: searchParams });
-
-      expect(mockPost).toHaveBeenCalledWith({
-        path: '/api/api-keys/search',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-          body: searchParams,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
-    });
-  });
-
-  describe('list', () => {
-    it('should call client.get with query parameters', async () => {
-      const mockApiKey: BshApiKeys = {
-        id: 1,
-        name: 'Test API Key',
-        duration: 3600,
-        type: 'PERSONAL',
-        scopes: [],
-        apiKey: 'test-api-key-123',
-        startedAt: { $date: new Date().toISOString() },
-        status: 'ACTIVE',
-        persistenceId: '1',
-        CreatedAt: { $date: new Date().toISOString() },
-      };
-      const mockResponse = {
-        data: [mockApiKey],
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockGet.mockResolvedValue(mockResponse);
-
-      const apiKeyService = ApiKeyService.getInstance();
-      await apiKeyService.list({
-        queryParams: {
-          page: '1',
-          size: '10',
-          sort: 'name',
-        },
-      });
-
-      expect(mockGet).toHaveBeenCalledWith({
-        path: '/api/api-keys?page=1&size=10&sort=name',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
+            expect(mockGet).toHaveBeenCalledWith({
+                path: '/api/api-keys/1',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
     });
 
-    it('should call client.get without query parameters', async () => {
-      const mockApiKey: BshApiKeys = {
-        id: 1,
-        name: 'Test API Key',
-        duration: 3600,
-        type: 'PERSONAL',
-        scopes: [],
-        apiKey: 'test-api-key-123',
-        startedAt: { $date: new Date().toISOString() },
-        status: 'ACTIVE',
-        persistenceId: '1',
-        CreatedAt: { $date: new Date().toISOString() },
-      };
-      const mockResponse = {
-        data: [mockApiKey],
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockGet.mockResolvedValue(mockResponse);
+    describe('revoke', () => {
+        it('should call client.delete with correct parameters', async () => {
+            const mockApiKey: BshApiKeys = { id: '1', name: 'Test Key' } as BshApiKeys;
+            const mockResponse = {
+                data: [mockApiKey],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockDelete.mockResolvedValue(mockResponse);
 
-      const apiKeyService = ApiKeyService.getInstance();
-      await apiKeyService.list({});
+            const params = {
+                id: 1,
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
 
-      expect(mockGet).toHaveBeenCalledWith({
-        path: '/api/api-keys',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
-    });
-  });
+            const result = await apiKeyService.revoke(params);
 
-  describe('deleteById', () => {
-    it('should call client.delete with correct endpoint', async () => {
-      const id = 'api-key-123';
-      const mockApiKey: BshApiKeys = {
-        id: 1,
-        name: 'Test API Key',
-        duration: 3600,
-        type: 'PERSONAL',
-        scopes: [],
-        apiKey: 'test-api-key-123',
-        startedAt: { $date: new Date().toISOString() },
-        status: 'REVOKED',
-        persistenceId: '1',
-        CreatedAt: { $date: new Date().toISOString() },
-      };
-      const mockResponse = {
-        data: [mockApiKey],
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockDelete.mockResolvedValue(mockResponse);
-
-      const apiKeyService = ApiKeyService.getInstance();
-      await apiKeyService.deleteById({ id });
-
-      expect(mockDelete).toHaveBeenCalledWith({
-        path: '/api/api-keys/api-key-123',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
+            expect(mockDelete).toHaveBeenCalledWith({
+                path: '/api/api-keys/1/revoke',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
     });
 
-    it('should handle onError callback', async () => {
-      const id = 'invalid-id';
-      const mockError = new BshError(404, '/api/api-keys/invalid-id');
-      mockDelete.mockRejectedValue(mockError);
+    describe('getById', () => {
+        it('should call client.get with correct parameters', async () => {
+            const mockApiKey: BshApiKeys = { id: '1', name: 'Test Key' } as BshApiKeys;
+            const mockResponse = {
+                data: [mockApiKey],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockGet.mockResolvedValue(mockResponse);
 
-      const onError = vi.fn();
-      const apiKeyService = ApiKeyService.getInstance();
-      await apiKeyService.deleteById({ id, onError }).catch(() => {});
+            const params = {
+                id: '1',
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
 
-      expect(mockDelete).toHaveBeenCalled();
+            const result = await apiKeyService.getById(params);
+
+            expect(mockGet).toHaveBeenCalledWith({
+                path: '/api/api-keys/1',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
     });
-  });
+
+    describe('search', () => {
+        it('should call client.post with correct parameters', async () => {
+            const mockApiKey: BshApiKeys = { id: '1', name: 'Test Key' } as BshApiKeys;
+            const mockResponse = {
+                data: [mockApiKey],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockPost.mockResolvedValue(mockResponse);
+
+            const searchParams: BshSearch<BshApiKeys> = {
+                filters: [],
+                sort: [],
+                pagination: { page: 1, size: 10 }
+            };
+            const params = {
+                payload: searchParams,
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
+
+            const result = await apiKeyService.search(params);
+
+            expect(mockPost).toHaveBeenCalledWith({
+                path: '/api/api-keys/search',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                    body: searchParams,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
+    });
+
+    describe('list', () => {
+        it('should call client.get with correct parameters and no query params', async () => {
+            const mockApiKey: BshApiKeys = { id: '1', name: 'Test Key' } as BshApiKeys;
+            const mockResponse = {
+                data: [mockApiKey],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockGet.mockResolvedValue(mockResponse);
+
+            const params = {
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
+
+            const result = await apiKeyService.list(params);
+
+            expect(mockGet).toHaveBeenCalledWith({
+                path: '/api/api-keys',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
+
+        it('should call client.get with query params', async () => {
+            const mockApiKey: BshApiKeys = { id: '1', name: 'Test Key' } as BshApiKeys;
+            const mockResponse = {
+                data: [mockApiKey],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockGet.mockResolvedValue(mockResponse);
+
+            const params = {
+                queryParams: {
+                    page: '1',
+                    size: '10',
+                    sort: 'name',
+                    filter: 'active'
+                },
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
+
+            const result = await apiKeyService.list(params);
+
+            expect(mockGet).toHaveBeenCalledWith({
+                path: '/api/api-keys?page=1&size=10&sort=name&filter=active',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
+    });
+
+    describe('deleteById', () => {
+        it('should call client.delete with correct parameters', async () => {
+            const mockApiKey: BshApiKeys = { id: '1', name: 'Test Key' } as BshApiKeys;
+            const mockResponse = {
+                data: [mockApiKey],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockDelete.mockResolvedValue(mockResponse);
+
+            const params = {
+                id: '1',
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
+
+            const result = await apiKeyService.deleteById(params);
+
+            expect(mockDelete).toHaveBeenCalledWith({
+                path: '/api/api-keys/1',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
+    });
 });
 

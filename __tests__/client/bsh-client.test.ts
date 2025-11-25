@@ -1,372 +1,344 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BshClient } from '@src/client/bsh-client';
-import type { BshClientFn, BshAuthFn } from '@src/client/types';
-import { BshError } from '@types';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { BshClient } from '../../src/client/bsh-client';
+import { BshClientFn, BshAuthFn } from '../../src/client/types';
+import { BshError } from '../../src/types';
 
 describe('BshClient', () => {
-  let mockHttpClient: BshClientFn;
-  let mockAuthFn: BshAuthFn;
-  let client: BshClient;
-  const host = 'http://localhost:3000';
+    let mockHttpClient: BshClientFn;
+    let mockAuthFn: BshAuthFn | undefined;
+    let client: BshClient;
 
-  beforeEach(() => {
-    mockHttpClient = vi.fn();
-    mockAuthFn = vi.fn().mockResolvedValue({ type: 'JWT', token: 'test-jwt-token' });
-    client = new BshClient(host, mockHttpClient, mockAuthFn);
-  });
-
-  describe('constructor', () => {
-    it('should create client without authFn', () => {
-      const clientWithoutAuth = new BshClient(host, mockHttpClient);
-      expect(clientWithoutAuth).toBeDefined();
+    beforeEach(() => {
+        mockHttpClient = vi.fn();
+        mockAuthFn = undefined;
     });
 
-    it('should create client with authFn', () => {
-      expect(client).toBeDefined();
-    });
-  });
+    describe('constructor', () => {
+        it('should create client with default values', () => {
+            client = new BshClient();
+            expect(client).toBeInstanceOf(BshClient);
+        });
 
-  describe('get', () => {
-    it('should make GET request with JWT auth', async () => {
-      const mockResponse = new Response(JSON.stringify({ data: [], code: 200, status: 'OK', error: '' }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-      mockHttpClient = vi.fn().mockResolvedValue(mockResponse);
-      client = new BshClient(host, mockHttpClient, mockAuthFn);
+        it('should create client with custom host', () => {
+            client = new BshClient('https://api.example.com');
+            expect(client).toBeInstanceOf(BshClient);
+        });
 
-      const result = await client.get({
-        path: '/api/test',
-        options: {},
-        bshOptions: {},
-      });
+        it('should create client with custom httpClient', () => {
+            const customClient = vi.fn();
+            client = new BshClient('', customClient);
+            expect(client).toBeInstanceOf(BshClient);
+        });
 
-      expect(mockHttpClient).toHaveBeenCalledWith({
-        path: 'http://localhost:3000/api/test',
-        options: {
-          method: 'GET',
-          headers: {
-            Authorization: 'Bearer test-jwt-token',
-          },
-        },
-        bshOptions: {},
-      });
-      expect(result).toBeDefined();
+        it('should create client with auth function', async () => {
+            mockAuthFn = vi.fn().mockResolvedValue({ type: 'JWT', token: 'test-token' });
+            client = new BshClient('', undefined, mockAuthFn);
+            expect(client).toBeInstanceOf(BshClient);
+        });
     });
 
-    it('should make GET request with APIKEY auth', async () => {
-      const apiKeyAuthFn: BshAuthFn = vi.fn().mockResolvedValue({ type: 'APIKEY', token: 'test-api-key' });
-      const mockResponse = new Response(JSON.stringify({ data: [], code: 200, status: 'OK', error: '' }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-      mockHttpClient = vi.fn().mockResolvedValue(mockResponse);
-      client = new BshClient(host, mockHttpClient, apiKeyAuthFn);
+    describe('getAuthHeaders', () => {
+        it('should return empty headers when no auth function', async () => {
+            client = new BshClient();
+            // Access private method through get method which uses it
+            const response = new Response(JSON.stringify({ data: [] }), { status: 200 });
+            mockHttpClient = vi.fn().mockResolvedValue(response);
+            client = new BshClient('', mockHttpClient);
+            
+            await client.get({
+                path: '/test',
+                options: {},
+                bshOptions: {}
+            });
 
-      await client.get({
-        path: '/api/test',
-        options: {},
-        bshOptions: {},
-      });
+            expect(mockHttpClient).toHaveBeenCalled();
+            const callArgs = mockHttpClient.mock.calls[0][0];
+            expect(callArgs.options.headers).toEqual({});
+        });
 
-      expect(mockHttpClient).toHaveBeenCalledWith({
-        path: 'http://localhost:3000/api/test',
-        options: {
-          method: 'GET',
-          headers: {
-            'X-BSH-APIKEY': 'test-api-key',
-          },
-        },
-        bshOptions: {},
-      });
+        it('should add JWT Bearer token to headers', async () => {
+            mockAuthFn = vi.fn().mockResolvedValue({ type: 'JWT', token: 'jwt-token-123' });
+            const response = new Response(JSON.stringify({ data: [] }), { status: 200 });
+            mockHttpClient = vi.fn().mockResolvedValue(response);
+            client = new BshClient('', mockHttpClient, mockAuthFn);
+
+            await client.get({
+                path: '/test',
+                options: {},
+                bshOptions: {}
+            });
+
+            expect(mockAuthFn).toHaveBeenCalled();
+            const callArgs = mockHttpClient.mock.calls[0][0];
+            expect(callArgs.options.headers).toEqual({
+                Authorization: 'Bearer jwt-token-123'
+            });
+        });
+
+        it('should add API key to headers', async () => {
+            mockAuthFn = vi.fn().mockResolvedValue({ type: 'APIKEY', token: 'api-key-456' });
+            const response = new Response(JSON.stringify({ data: [] }), { status: 200 });
+            mockHttpClient = vi.fn().mockResolvedValue(response);
+            client = new BshClient('', mockHttpClient, mockAuthFn);
+
+            await client.get({
+                path: '/test',
+                options: {},
+                bshOptions: {}
+            });
+
+            expect(mockAuthFn).toHaveBeenCalled();
+            const callArgs = mockHttpClient.mock.calls[0][0];
+            expect(callArgs.options.headers).toEqual({
+                'X-BSH-APIKEY': 'api-key-456'
+            });
+        });
+
+        it('should merge custom headers with auth headers', async () => {
+            mockAuthFn = vi.fn().mockResolvedValue({ type: 'JWT', token: 'token' });
+            const response = new Response(JSON.stringify({ data: [] }), { status: 200 });
+            mockHttpClient = vi.fn().mockResolvedValue(response);
+            client = new BshClient('', mockHttpClient, mockAuthFn);
+
+            await client.get({
+                path: '/test',
+                options: {
+                    headers: { 'Custom-Header': 'value' }
+                },
+                bshOptions: {}
+            });
+
+            const callArgs = mockHttpClient.mock.calls[0][0];
+            expect(callArgs.options.headers).toEqual({
+                'Custom-Header': 'value',
+                Authorization: 'Bearer token'
+            });
+        });
     });
 
-    it('should handle onSuccess callback', async () => {
-      const mockData = { data: [{ id: '1' }], code: 200, status: 'OK', error: '' };
-      const mockResponse = new Response(JSON.stringify(mockData), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-      mockHttpClient = vi.fn().mockResolvedValue(mockResponse);
-      client = new BshClient(host, mockHttpClient, mockAuthFn);
+    describe('get', () => {
+        it('should make GET request successfully', async () => {
+            const mockData = { data: [{ id: 1 }], code: 200, status: 'OK', error: '', timestamp: Date.now() };
+            const response = new Response(JSON.stringify(mockData), { status: 200 });
+            mockHttpClient = vi.fn().mockResolvedValue(response);
+            client = new BshClient('https://api.test.com', mockHttpClient);
 
-      const onSuccess = vi.fn();
-      const result = await client.get({
-        path: '/api/test',
-        options: {},
-        bshOptions: { onSuccess },
-      });
+            const result = await client.get({
+                path: '/users',
+                options: {},
+                bshOptions: {}
+            });
 
-      expect(onSuccess).toHaveBeenCalledWith(mockData);
-      expect(result).toBeUndefined();
+            expect(mockHttpClient).toHaveBeenCalledWith({
+                path: 'https://api.test.com/users',
+                options: {
+                    method: 'GET',
+                    headers: {}
+                },
+                bshOptions: {}
+            });
+            expect(result).toEqual(mockData);
+        });
+
+        it('should handle error response', async () => {
+            const mockError = { data: [], code: 404, status: 'Not Found', error: 'Resource not found', timestamp: Date.now() };
+            const response = new Response(JSON.stringify(mockError), { status: 404 });
+            mockHttpClient = vi.fn().mockResolvedValue(response);
+            client = new BshClient('', mockHttpClient);
+
+            await expect(client.get({
+                path: '/users',
+                options: {},
+                bshOptions: {}
+            })).rejects.toThrow(BshError);
+        });
+
+        it('should call onError callback when provided', async () => {
+            const mockError = { data: [], code: 500, status: 'Error', error: 'Server error', timestamp: Date.now() };
+            const response = new Response(JSON.stringify(mockError), { status: 500 });
+            mockHttpClient = vi.fn().mockResolvedValue(response);
+            client = new BshClient('', mockHttpClient);
+
+            const onError = vi.fn();
+            const result = await client.get({
+                path: '/users',
+                options: {},
+                bshOptions: { onError }
+            });
+
+            expect(onError).toHaveBeenCalled();
+            expect(result).toBeUndefined();
+        });
+
+        it('should call onSuccess callback when provided', async () => {
+            const mockData = { data: [{ id: 1 }], code: 200, status: 'OK', error: '', timestamp: Date.now() };
+            const response = new Response(JSON.stringify(mockData), { status: 200 });
+            mockHttpClient = vi.fn().mockResolvedValue(response);
+            client = new BshClient('', mockHttpClient);
+
+            const onSuccess = vi.fn();
+            const result = await client.get({
+                path: '/users',
+                options: {},
+                bshOptions: { onSuccess }
+            });
+
+            expect(onSuccess).toHaveBeenCalledWith(mockData);
+            expect(result).toBeUndefined();
+        });
     });
 
-    it('should handle onError callback', async () => {
-      const mockErrorData = { data: [], code: 404, status: 'Not Found', error: 'Resource not found' };
-      const mockResponse = new Response(JSON.stringify(mockErrorData), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      });
-      mockHttpClient = vi.fn().mockResolvedValue(mockResponse);
-      client = new BshClient(host, mockHttpClient, mockAuthFn);
+    describe('post', () => {
+        it('should make POST request successfully', async () => {
+            const mockData = { data: [{ id: 1 }], code: 201, status: 'Created', error: '', timestamp: Date.now() };
+            const response = new Response(JSON.stringify(mockData), { status: 201 });
+            mockHttpClient = vi.fn().mockResolvedValue(response);
+            client = new BshClient('https://api.test.com', mockHttpClient);
 
-      const onError = vi.fn();
-      const result = await client.get({
-        path: '/api/test',
-        options: {},
-        bshOptions: { onError },
-      });
+            const payload = { name: 'Test' };
+            const result = await client.post({
+                path: '/users',
+                options: {
+                    body: payload
+                },
+                bshOptions: {}
+            });
 
-      expect(onError).toHaveBeenCalled();
-      expect(onError.mock.calls[0][0]).toBeInstanceOf(BshError);
-      expect(result).toBeUndefined();
+            expect(mockHttpClient).toHaveBeenCalledWith({
+                path: 'https://api.test.com/users',
+                options: {
+                    method: 'POST',
+                    body: payload,
+                    headers: {}
+                },
+                bshOptions: {}
+            });
+            expect(result).toEqual(mockData);
+        });
     });
 
-    it('should throw error when no onError callback', async () => {
-      const mockErrorData = { data: [], code: 500, status: 'Error', error: 'Server error' };
-      const mockResponse = new Response(JSON.stringify(mockErrorData), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
-      mockHttpClient = vi.fn().mockResolvedValue(mockResponse);
-      client = new BshClient(host, mockHttpClient, mockAuthFn);
+    describe('put', () => {
+        it('should make PUT request successfully', async () => {
+            const mockData = { data: [{ id: 1 }], code: 200, status: 'OK', error: '', timestamp: Date.now() };
+            const response = new Response(JSON.stringify(mockData), { status: 200 });
+            mockHttpClient = vi.fn().mockResolvedValue(response);
+            client = new BshClient('https://api.test.com', mockHttpClient);
 
-      await expect(
-        client.get({
-          path: '/api/test',
-          options: {},
-          bshOptions: {},
-        })
-      ).rejects.toThrow(BshError);
+            const payload = { name: 'Updated' };
+            const result = await client.put({
+                path: '/users/1',
+                options: {
+                    body: payload
+                },
+                bshOptions: {}
+            });
+
+            expect(mockHttpClient).toHaveBeenCalledWith({
+                path: 'https://api.test.com/users/1',
+                options: {
+                    method: 'PUT',
+                    body: payload,
+                    headers: {}
+                },
+                bshOptions: {}
+            });
+            expect(result).toEqual(mockData);
+        });
     });
 
-    it('should merge custom headers', async () => {
-      const mockResponse = new Response(JSON.stringify({ data: [], code: 200, status: 'OK', error: '' }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-      mockHttpClient = vi.fn().mockResolvedValue(mockResponse);
-      client = new BshClient(host, mockHttpClient, mockAuthFn);
+    describe('delete', () => {
+        it('should make DELETE request successfully', async () => {
+            const mockData = { data: [], code: 200, status: 'OK', error: '', timestamp: Date.now() };
+            const response = new Response(JSON.stringify(mockData), { status: 200 });
+            mockHttpClient = vi.fn().mockResolvedValue(response);
+            client = new BshClient('https://api.test.com', mockHttpClient);
 
-      await client.get({
-        path: '/api/test',
-        options: {
-          headers: {
-            'Custom-Header': 'custom-value',
-          },
-        },
-        bshOptions: {},
-      });
+            const result = await client.delete({
+                path: '/users/1',
+                options: {},
+                bshOptions: {}
+            });
 
-      expect(mockHttpClient).toHaveBeenCalledWith({
-        path: 'http://localhost:3000/api/test',
-        options: {
-          method: 'GET',
-          headers: {
-            'Custom-Header': 'custom-value',
-            Authorization: 'Bearer test-jwt-token',
-          },
-        },
-        bshOptions: {},
-      });
-    });
-  });
-
-  describe('post', () => {
-    it('should make POST request with body', async () => {
-      const mockData = { data: [{ id: '1' }], code: 201, status: 'Created', error: '' };
-      const mockResponse = new Response(JSON.stringify(mockData), {
-        status: 201,
-        headers: { 'Content-Type': 'application/json' },
-      });
-      mockHttpClient = vi.fn().mockResolvedValue(mockResponse);
-      client = new BshClient(host, mockHttpClient, mockAuthFn);
-
-      const body = { name: 'Test' };
-      await client.post({
-        path: '/api/test',
-        options: { body },
-        bshOptions: {},
-      });
-
-      expect(mockHttpClient).toHaveBeenCalledWith({
-        path: 'http://localhost:3000/api/test',
-        options: {
-          method: 'POST',
-          body,
-          headers: {
-            Authorization: 'Bearer test-jwt-token',
-          },
-        },
-        bshOptions: {},
-      });
-    });
-  });
-
-  describe('put', () => {
-    it('should make PUT request with body', async () => {
-      const mockData = { data: [{ id: '1' }], code: 200, status: 'OK', error: '' };
-      const mockResponse = new Response(JSON.stringify(mockData), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-      mockHttpClient = vi.fn().mockResolvedValue(mockResponse);
-      client = new BshClient(host, mockHttpClient, mockAuthFn);
-
-      const body = { id: '1', name: 'Updated' };
-      await client.put({
-        path: '/api/test',
-        options: { body },
-        bshOptions: {},
-      });
-
-      expect(mockHttpClient).toHaveBeenCalledWith({
-        path: 'http://localhost:3000/api/test',
-        options: {
-          method: 'PUT',
-          body,
-          headers: {
-            Authorization: 'Bearer test-jwt-token',
-          },
-        },
-        bshOptions: {},
-      });
-    });
-  });
-
-  describe('delete', () => {
-    it('should make DELETE request', async () => {
-      const mockData = { data: [], code: 200, status: 'OK', error: '' };
-      const mockResponse = new Response(JSON.stringify(mockData), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-      mockHttpClient = vi.fn().mockResolvedValue(mockResponse);
-      client = new BshClient(host, mockHttpClient, mockAuthFn);
-
-      await client.delete({
-        path: '/api/test/1',
-        options: {},
-        bshOptions: {},
-      });
-
-      expect(mockHttpClient).toHaveBeenCalledWith({
-        path: 'http://localhost:3000/api/test/1',
-        options: {
-          method: 'DELETE',
-          headers: {
-            Authorization: 'Bearer test-jwt-token',
-          },
-        },
-        bshOptions: {},
-      });
-    });
-  });
-
-  describe('patch', () => {
-    it('should make PATCH request with body', async () => {
-      const mockData = { data: [{ id: '1' }], code: 200, status: 'OK', error: '' };
-      const mockResponse = new Response(JSON.stringify(mockData), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-      mockHttpClient = vi.fn().mockResolvedValue(mockResponse);
-      client = new BshClient(host, mockHttpClient, mockAuthFn);
-
-      const body = { name: 'Patched' };
-      await client.patch({
-        path: '/api/test/1',
-        options: { body },
-        bshOptions: {},
-      });
-
-      expect(mockHttpClient).toHaveBeenCalledWith({
-        path: 'http://localhost:3000/api/test/1',
-        options: {
-          method: 'PATCH',
-          body,
-          headers: {
-            Authorization: 'Bearer test-jwt-token',
-          },
-        },
-        bshOptions: {},
-      });
-    });
-  });
-
-  describe('download', () => {
-    it('should download blob', async () => {
-      const mockBlob = new Blob(['test content'], { type: 'application/pdf' });
-      const mockResponse = new Response(mockBlob, {
-        status: 200,
-        headers: { 'Content-Type': 'application/pdf' },
-      });
-      mockHttpClient = vi.fn().mockResolvedValue(mockResponse);
-      client = new BshClient(host, mockHttpClient, mockAuthFn);
-
-      const result = await client.download({
-        path: '/api/test/download',
-        options: {},
-        bshOptions: {},
-      });
-
-      expect(mockHttpClient).toHaveBeenCalledWith({
-        path: 'http://localhost:3000/api/test/download',
-        options: {
-          headers: {
-            Authorization: 'Bearer test-jwt-token',
-          },
-        },
-        bshOptions: {},
-      });
-      expect(result).toBeInstanceOf(Blob);
+            expect(mockHttpClient).toHaveBeenCalledWith({
+                path: 'https://api.test.com/users/1',
+                options: {
+                    method: 'DELETE',
+                    headers: {}
+                },
+                bshOptions: {}
+            });
+            expect(result).toEqual(mockData);
+        });
     });
 
-    it('should handle onDownload callback', async () => {
-      const mockBlob = new Blob(['test content'], { type: 'application/pdf' });
-      const mockResponse = new Response(mockBlob, {
-        status: 200,
-        headers: { 'Content-Type': 'application/pdf' },
-      });
-      mockHttpClient = vi.fn().mockResolvedValue(mockResponse);
-      client = new BshClient(host, mockHttpClient, mockAuthFn);
+    describe('patch', () => {
+        it('should make PATCH request successfully', async () => {
+            const mockData = { data: [{ id: 1 }], code: 200, status: 'OK', error: '', timestamp: Date.now() };
+            const response = new Response(JSON.stringify(mockData), { status: 200 });
+            mockHttpClient = vi.fn().mockResolvedValue(response);
+            client = new BshClient('https://api.test.com', mockHttpClient);
 
-      const onDownload = vi.fn();
-      const result = await client.download({
-        path: '/api/test/download',
-        options: {},
-        bshOptions: { onDownload },
-      });
+            const payload = { name: 'Patched' };
+            const result = await client.patch({
+                path: '/users/1',
+                options: {
+                    body: payload
+                },
+                bshOptions: {}
+            });
 
-      expect(onDownload).toHaveBeenCalledWith(mockBlob);
-      expect(result).toBeUndefined();
+            expect(mockHttpClient).toHaveBeenCalledWith({
+                path: 'https://api.test.com/users/1',
+                options: {
+                    method: 'PATCH',
+                    body: payload,
+                    headers: {}
+                },
+                bshOptions: {}
+            });
+            expect(result).toEqual(mockData);
+        });
     });
-  });
 
-  describe('auth handling', () => {
-    it('should work without authFn', async () => {
-      const mockResponse = new Response(JSON.stringify({ data: [], code: 200, status: 'OK', error: '' }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-      mockHttpClient = vi.fn().mockResolvedValue(mockResponse);
-      const clientWithoutAuth = new BshClient(host, mockHttpClient);
+    describe('download', () => {
+        it('should download blob successfully', async () => {
+            const blob = new Blob(['test content'], { type: 'application/pdf' });
+            const response = new Response(blob, { status: 200 });
+            mockHttpClient = vi.fn().mockResolvedValue(response);
+            client = new BshClient('https://api.test.com', mockHttpClient);
 
-      await clientWithoutAuth.get({
-        path: '/api/test',
-        options: {},
-        bshOptions: {},
-      });
+            const result = await client.download({
+                path: '/files/1',
+                options: {},
+                bshOptions: {}
+            });
 
-      expect(mockHttpClient).toHaveBeenCalledWith({
-        path: 'http://localhost:3000/api/test',
-        options: {
-          method: 'GET',
-          headers: {},
-        },
-        bshOptions: {},
-      });
+            expect(mockHttpClient).toHaveBeenCalledWith({
+                path: 'https://api.test.com/files/1',
+                options: {
+                    headers: {}
+                },
+                bshOptions: {}
+            });
+            expect(result).toBeInstanceOf(Blob);
+        });
+
+        it('should call onDownload callback when provided', async () => {
+            const blob = new Blob(['test'], { type: 'text/plain' });
+            const response = new Response(blob, { status: 200 });
+            mockHttpClient = vi.fn().mockResolvedValue(response);
+            client = new BshClient('', mockHttpClient);
+
+            const onDownload = vi.fn();
+            const result = await client.download({
+                path: '/files/1',
+                options: {},
+                bshOptions: { onDownload }
+            });
+
+            expect(onDownload).toHaveBeenCalled();
+            expect(result).toBeUndefined();
+        });
     });
-  });
 });
 

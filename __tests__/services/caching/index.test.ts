@@ -1,361 +1,192 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CachingService } from '@src/services/caching';
-import { bshConfigs } from '@config';
-import type { BshClientFn, BshAuthFn } from '@src/client/types';
-import type { CacheInfo, BshSearch } from '@types';
-import { BshError } from '@types';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { CachingService } from '../../../src/services/caching';
+import { BshClient } from '../../../src/client/bsh-client';
+import { CacheInfo, BshSearch } from '../../../src/types';
 
 describe('CachingService', () => {
-  let mockClientFn: BshClientFn;
-  let mockAuthFn: BshAuthFn;
-  let mockGet: any;
-  let mockPost: any;
-  let mockDelete: any;
+    let cachingService: CachingService;
+    let mockClient: BshClient;
+    let mockGet: ReturnType<typeof vi.fn>;
+    let mockPost: ReturnType<typeof vi.fn>;
+    let mockDelete: ReturnType<typeof vi.fn>;
 
-  beforeEach(() => {
-    // Reset singleton
-    (CachingService as any).instance = undefined;
-    bshConfigs.reset();
-
-    // Setup mocks
-    mockGet = vi.fn();
-    mockPost = vi.fn();
-    mockDelete = vi.fn();
-
-    mockClientFn = vi.fn();
-    mockAuthFn = vi.fn().mockResolvedValue({ type: 'JWT', token: 'test-token' });
-
-    // Mock BshClient methods
-    const mockClient = {
-      get: mockGet,
-      post: mockPost,
-      delete: mockDelete,
-    };
-
-    // Mock createClient to return our mock
-    vi.spyOn(bshConfigs, 'createClient').mockReturnValue(mockClient as any);
-
-    bshConfigs.configure({
-      clientFn: mockClientFn,
-      authFn: mockAuthFn,
-      host: 'http://localhost:3000',
-    });
-  });
-
-  describe('getInstance', () => {
-    it('should return the same instance (singleton)', () => {
-      const instance1 = CachingService.getInstance();
-      const instance2 = CachingService.getInstance();
-
-      expect(instance1).toBe(instance2);
+    beforeEach(() => {
+        mockGet = vi.fn();
+        mockPost = vi.fn();
+        mockDelete = vi.fn();
+        mockClient = {
+            get: mockGet,
+            post: mockPost,
+            put: vi.fn(),
+            delete: mockDelete,
+            patch: vi.fn(),
+            download: vi.fn(),
+        } as unknown as BshClient;
+        cachingService = new CachingService(mockClient);
     });
 
-    it('should create a new instance after reset', () => {
-      const instance1 = CachingService.getInstance();
-      (CachingService as any).instance = undefined;
-      const instance2 = CachingService.getInstance();
+    describe('findById', () => {
+        it('should call client.get with correct parameters', async () => {
+            const mockCacheInfo: CacheInfo = { id: 'cache1', name: 'test-cache' } as CacheInfo;
+            const mockResponse = {
+                data: [mockCacheInfo],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockGet.mockResolvedValue(mockResponse);
 
-      expect(instance1).not.toBe(instance2);
-    });
-  });
+            const params = {
+                id: 'cache1',
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
 
-  describe('findById', () => {
-    it('should call client.get with correct endpoint', async () => {
-      const cacheId = 'cache-123';
-      const mockCacheInfo: CacheInfo = {
-        name: 'test-cache',
-        estimatedSize: 1024,
-        requestCount: 100,
-        hitCount: 80,
-        hitRate: 0.8,
-        missCount: 20,
-        missRate: 0.2,
-        expireAfterWrite: 3600,
-        expireAfterAccess: 1800,
-        maximumSize: 10000,
-        currentSize: 5000,
-        evictionCount: 10,
-        evictionWeight: 5,
-        loadCount: 20,
-        totalLoadTime: 1000,
-        averageLoadPenalty: 50,
-        loadSuccessCount: 18,
-        loadFailureCount: 2,
-        loadFailureRate: 0.1,
-      };
-      const mockResponse = {
-        data: [mockCacheInfo],
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockGet.mockResolvedValue(mockResponse);
+            const result = await cachingService.findById(params);
 
-      const cachingService = CachingService.getInstance();
-      await cachingService.findById({ id: cacheId });
-
-      expect(mockGet).toHaveBeenCalledWith({
-        path: '/api/caching/cache-123',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
+            expect(mockGet).toHaveBeenCalledWith({
+                path: '/api/caching/cache1',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
     });
 
-    it('should handle onSuccess callback', async () => {
-      const cacheId = 'cache-123';
-      const mockCacheInfo: CacheInfo = {
-        name: 'test-cache',
-        estimatedSize: 1024,
-        requestCount: 100,
-        hitCount: 80,
-        hitRate: 0.8,
-        missCount: 20,
-        missRate: 0.2,
-        expireAfterWrite: null,
-        expireAfterAccess: null,
-        maximumSize: 10000,
-        currentSize: 5000,
-        evictionCount: 0,
-        evictionWeight: 0,
-        loadCount: 0,
-        totalLoadTime: 0,
-        averageLoadPenalty: 0,
-        loadSuccessCount: 0,
-        loadFailureCount: 0,
-        loadFailureRate: 0,
-      };
-      const mockResponse = {
-        data: [mockCacheInfo],
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockGet.mockImplementation(async (params: any) => {
-        if (params.bshOptions?.onSuccess) {
-          params.bshOptions.onSuccess(mockResponse);
-          return undefined;
-        }
-        return mockResponse;
-      });
+    describe('search', () => {
+        it('should call client.post with correct parameters', async () => {
+            const mockCacheInfo: CacheInfo = { id: 'cache1', name: 'test-cache' } as CacheInfo;
+            const mockResponse = {
+                data: [mockCacheInfo],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockPost.mockResolvedValue(mockResponse);
 
-      const onSuccess = vi.fn();
-      const cachingService = CachingService.getInstance();
-      await cachingService.findById({ id: cacheId, onSuccess });
+            const searchParams: BshSearch = {
+                filters: [],
+                sort: [],
+                pagination: { page: 1, size: 10 }
+            };
+            const params = {
+                payload: searchParams,
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
 
-      expect(onSuccess).toHaveBeenCalledWith(mockResponse);
-    });
-  });
+            const result = await cachingService.search(params);
 
-  describe('search', () => {
-    it('should call client.post with correct endpoint and payload', async () => {
-      const searchParams: BshSearch = {
-        filters: [
-          {
-            field: 'name',
-            operator: 'eq',
-            value: 'test-cache',
-          },
-        ],
-      };
-      const mockCacheInfo: CacheInfo = {
-        name: 'test-cache',
-        estimatedSize: 1024,
-        requestCount: 100,
-        hitCount: 80,
-        hitRate: 0.8,
-        missCount: 20,
-        missRate: 0.2,
-        expireAfterWrite: 3600,
-        expireAfterAccess: 1800,
-        maximumSize: 10000,
-        currentSize: 5000,
-        evictionCount: 10,
-        evictionWeight: 5,
-        loadCount: 20,
-        totalLoadTime: 1000,
-        averageLoadPenalty: 50,
-        loadSuccessCount: 18,
-        loadFailureCount: 2,
-        loadFailureRate: 0.1,
-      };
-      const mockResponse = {
-        data: [mockCacheInfo],
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockPost.mockResolvedValue(mockResponse);
-
-      const cachingService = CachingService.getInstance();
-      await cachingService.search({ payload: searchParams });
-
-      expect(mockPost).toHaveBeenCalledWith({
-        path: '/api/caching/search',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-          body: searchParams,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
-    });
-  });
-
-  describe('names', () => {
-    it('should call client.get with correct endpoint', async () => {
-      const mockResponse = {
-        data: ['cache-1', 'cache-2', 'cache-3'],
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockGet.mockResolvedValue(mockResponse);
-
-      const cachingService = CachingService.getInstance();
-      await cachingService.names({});
-
-      expect(mockGet).toHaveBeenCalledWith({
-        path: '/api/caching/names',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
+            expect(mockPost).toHaveBeenCalledWith({
+                path: '/api/caching/search',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                    body: searchParams,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
     });
 
-    it('should handle onSuccess callback', async () => {
-      const mockResponse = {
-        data: ['cache-1', 'cache-2'],
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockGet.mockImplementation(async (params: any) => {
-        if (params.bshOptions?.onSuccess) {
-          params.bshOptions.onSuccess(mockResponse);
-          return undefined;
-        }
-        return mockResponse;
-      });
+    describe('names', () => {
+        it('should call client.get with correct parameters', async () => {
+            const mockResponse = {
+                data: ['cache1', 'cache2', 'cache3'],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockGet.mockResolvedValue(mockResponse);
 
-      const onSuccess = vi.fn();
-      const cachingService = CachingService.getInstance();
-      await cachingService.names({ onSuccess });
+            const params = {
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
 
-      expect(onSuccess).toHaveBeenCalledWith(mockResponse);
-    });
-  });
+            const result = await cachingService.names(params);
 
-  describe('clearById', () => {
-    it('should call client.delete with correct endpoint', async () => {
-      const cacheId = 'cache-123';
-      const mockResponse = {
-        data: [{ effected: 1 }],
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockDelete.mockResolvedValue(mockResponse);
-
-      const cachingService = CachingService.getInstance();
-      await cachingService.clearById({ id: cacheId });
-
-      expect(mockDelete).toHaveBeenCalledWith({
-        path: '/api/caching/cache-123',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
+            expect(mockGet).toHaveBeenCalledWith({
+                path: '/api/caching/names',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
     });
 
-    it('should handle onSuccess callback', async () => {
-      const cacheId = 'cache-123';
-      const mockResponse = {
-        data: [{ effected: 1 }],
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockDelete.mockImplementation(async (params: any) => {
-        if (params.bshOptions?.onSuccess) {
-          params.bshOptions.onSuccess(mockResponse);
-          return undefined;
-        }
-        return mockResponse;
-      });
+    describe('clearById', () => {
+        it('should call client.delete with correct parameters', async () => {
+            const mockResponse = {
+                data: [{ caches: ['cache1'] }],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockDelete.mockResolvedValue(mockResponse);
 
-      const onSuccess = vi.fn();
-      const cachingService = CachingService.getInstance();
-      await cachingService.clearById({ id: cacheId, onSuccess });
+            const params = {
+                id: 'cache1',
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
 
-      expect(onSuccess).toHaveBeenCalledWith(mockResponse);
-    });
-  });
+            const result = await cachingService.clearById(params);
 
-  describe('clearAll', () => {
-    it('should call client.delete with correct endpoint', async () => {
-      const mockResponse = {
-        data: [{ effected: 5 }],
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockDelete.mockResolvedValue(mockResponse);
-
-      const cachingService = CachingService.getInstance();
-      await cachingService.clearAll({});
-
-      expect(mockDelete).toHaveBeenCalledWith({
-        path: '/api/caching/all',
-        options: {
-          responseType: 'json',
-          requestFormat: 'json',
-        },
-        bshOptions: { onSuccess: undefined, onError: undefined },
-      });
+            expect(mockDelete).toHaveBeenCalledWith({
+                path: '/api/caching/cache1',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
     });
 
-    it('should handle onSuccess callback', async () => {
-      const mockResponse = {
-        data: [{ effected: 5 }],
-        code: 200,
-        status: 'OK',
-        error: '',
-      };
-      mockDelete.mockImplementation(async (params: any) => {
-        if (params.bshOptions?.onSuccess) {
-          params.bshOptions.onSuccess(mockResponse);
-          return undefined;
-        }
-        return mockResponse;
-      });
+    describe('clearAll', () => {
+        it('should call client.delete with correct parameters', async () => {
+            const mockResponse = {
+                data: [{ caches: ['cache1', 'cache2'] }],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockDelete.mockResolvedValue(mockResponse);
 
-      const onSuccess = vi.fn();
-      const cachingService = CachingService.getInstance();
-      await cachingService.clearAll({ onSuccess });
+            const params = {
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
 
-      expect(onSuccess).toHaveBeenCalledWith(mockResponse);
+            const result = await cachingService.clearAll(params);
+
+            expect(mockDelete).toHaveBeenCalledWith({
+                path: '/api/caching/all',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            });
+            expect(result).toEqual(mockResponse);
+        });
     });
-
-    it('should handle onError callback', async () => {
-      const mockError = new BshError(500, '/api/caching/all');
-      mockDelete.mockRejectedValue(mockError);
-
-      const onError = vi.fn();
-      const cachingService = CachingService.getInstance();
-      await cachingService.clearAll({ onError }).catch(() => {});
-
-      expect(mockDelete).toHaveBeenCalled();
-    });
-  });
 });
 
