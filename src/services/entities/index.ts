@@ -24,6 +24,7 @@ export class EntityService<T = unknown> {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: `entities.${params.entity || this.entity}.${params.entity || this.entity}.findById`,
         });
     }
 
@@ -42,6 +43,7 @@ export class EntityService<T = unknown> {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: `entities.${params.entity || this.entity}.create`,
         });
     }
 
@@ -60,6 +62,7 @@ export class EntityService<T = unknown> {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: `entities.${params.entity || this.entity}.createMany`,
         });
     }
 
@@ -78,6 +81,7 @@ export class EntityService<T = unknown> {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: `entities.${params.entity || this.entity}.update`,
         });
     }
 
@@ -96,6 +100,7 @@ export class EntityService<T = unknown> {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: `entities.${params.entity || this.entity}.updateMany`,
         });
     }
 
@@ -114,6 +119,7 @@ export class EntityService<T = unknown> {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: `entities.${params.entity || this.entity}.delete`,
         });
     }
 
@@ -132,6 +138,7 @@ export class EntityService<T = unknown> {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: `entities.${params.entity || this.entity}.delete`,
         });
     }
 
@@ -149,6 +156,7 @@ export class EntityService<T = unknown> {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: `entities.${params.entity || this.entity}.deleteById`,
         });
     }
 
@@ -166,6 +174,7 @@ export class EntityService<T = unknown> {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: `entities.${params.entity || this.entity}.columns`,
         });
     }
 
@@ -190,6 +199,7 @@ export class EntityService<T = unknown> {
                 },
             },
             bshOptions: { onDownload: params.onDownload, onError: params.onError },
+            api: `entities.${params.entity || this.entity}.export`,
         });
     }
 }

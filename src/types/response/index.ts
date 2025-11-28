@@ -5,18 +5,13 @@ export type BshResponse<T> = {
     status: string
     error: string
     meta?: {
-        sql: string
-        error: string
+        type?: string,
+        sql?: string,
+        error?: string,
         tips?: {[key: string]: string}
     }
-    pagination?: {
-        current: number
-        total: number
-        pages: number
-        first: boolean
-        last: boolean
-    }
     endpoint?: string,
+    api?: string,
     validations?: {field: string, error: string}[]
 }
 

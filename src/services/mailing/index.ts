@@ -20,6 +20,7 @@ export class MailingService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'mailing.send',
         });
     }
 }

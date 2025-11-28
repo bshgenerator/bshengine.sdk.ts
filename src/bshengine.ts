@@ -1,4 +1,4 @@
-import { BshAuthFn, BshClient, BshClientFn, BshRefreshTokenFn, fetchClientFn } from "@client";
+import { BshAuthFn, BshClient, BshClientFn, BshErrorInterceptor, BshPostInterceptor, BshPreInterceptor, BshRefreshTokenFn, fetchClientFn } from "@client";
 import { ApiKeyService, AuthService, BshUtilsService, CachingService, EntityService, ImageService, MailingService, SettingsService, UserService } from "@src/services";
 import { BshEntities, BshPolicy,BshRole, BshEmailTemplate, BshEventLogs, BshSchemas, BshTypes, BshUser, SentEmail, BshTrigger, BshTriggerInstance, BshFiles, BshConfigurations } from "@types";
 
@@ -8,6 +8,11 @@ export class BshEngine {
     private authFn?: BshAuthFn;
     private refreshTokenFn?: BshRefreshTokenFn;
 
+    private postInterceptors: BshPostInterceptor<unknown>[] = [];
+    private preInterceptors: BshPreInterceptor<unknown>[] = [];
+    private errorInterceptors: BshErrorInterceptor<unknown>[] = [];
+
+    // Configuration
     public withHost(hostFn: string) {
         this.host = hostFn;
         return this;
@@ -28,10 +33,41 @@ export class BshEngine {
         return this;
     }
 
+    // Interceptors
+    public postInterceptor(interceptor: BshPostInterceptor<unknown>) {
+        this.postInterceptors.push(interceptor);
+        return this;
+    }
+
+    public preInterceptor(interceptor: BshPreInterceptor<unknown>) {
+        this.preInterceptors.push(interceptor);
+        return this;
+    }
+
+    public errorInterceptor(interceptor: BshErrorInterceptor<unknown>) {
+        this.errorInterceptors.push(interceptor);
+        return this;
+    }
+
+    // getters
+    public getPostInterceptors() {
+        return this.postInterceptors;
+    }
+
+    public getPreInterceptors() {
+        return this.preInterceptors;
+    }
+
+    public getErrorInterceptors() {
+        return this.errorInterceptors;
+    }
+
+    // Client
     private get client(): BshClient {
         return new BshClient(this.host, this.clientFn, this.authFn, this.refreshTokenFn, this);
     }
 
+    // Services
     public get entities() {
         return new EntityService(this.client);
     }

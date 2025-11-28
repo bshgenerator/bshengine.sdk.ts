@@ -1,17 +1,7 @@
 
 import { BshClient } from "@src/client/bsh-client";
-import { BshResponse, BshUser, BshUserInit } from "@types";
+import { BshResponse, BshUser, BshUserInit, LoginParams, AuthTokens } from "@types";
 import { BshCallbackParamsWithPayload } from "@src/services";
-
-export type LoginParams = {
-    email: string;
-    password: string;
-}
-
-export type LoginResponse = {
-    access: string;
-    refresh: string;
-}
 
 export class AuthService {
     private readonly baseEndpoint = '/api/auth';
@@ -19,8 +9,8 @@ export class AuthService {
     public constructor(private readonly client: BshClient) {
     }
 
-    public async login(params: BshCallbackParamsWithPayload<LoginParams, LoginResponse>): Promise<BshResponse<LoginResponse> | undefined> {
-        return this.client.post<LoginResponse>({
+    public async login(params: BshCallbackParamsWithPayload<LoginParams, AuthTokens>): Promise<BshResponse<AuthTokens> | undefined> {
+        return this.client.post<AuthTokens>({
             path: `${this.baseEndpoint}/login`,
             options: {
                 responseType: 'json',
@@ -31,6 +21,7 @@ export class AuthService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'auth.login',
         });
     }
 
@@ -46,11 +37,12 @@ export class AuthService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'auth.register',
         });
     }
 
-    public async refreshToken(params: BshCallbackParamsWithPayload<{ refresh: string }, LoginResponse>): Promise<BshResponse<LoginResponse> | undefined> {
-        return this.client.post<LoginResponse>({
+    public async refreshToken(params: BshCallbackParamsWithPayload<{ refresh: string }, AuthTokens>): Promise<BshResponse<AuthTokens> | undefined> {
+        return this.client.post<AuthTokens>({
             path: `${this.baseEndpoint}/refresh`,
             options: {
                 responseType: 'json',
@@ -61,11 +53,12 @@ export class AuthService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'auth.refreshToken',
         });
     }
 
     public async forgetPassword(
-        params: BshCallbackParamsWithPayload<{ email: string }, unknown >): Promise<BshResponse<unknown> | undefined> {
+        params: BshCallbackParamsWithPayload<{ email: string }, unknown>): Promise<BshResponse<unknown> | undefined> {
         return this.client.post<unknown>({
             path: `${this.baseEndpoint}/forget-password`,
             options: {
@@ -77,6 +70,7 @@ export class AuthService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'auth.forgetPassword',
         });
     }
 
@@ -92,6 +86,7 @@ export class AuthService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'auth.resetPassword',
         });
     }
 
@@ -107,6 +102,7 @@ export class AuthService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'auth.activateAccount',
         });
     }
 }

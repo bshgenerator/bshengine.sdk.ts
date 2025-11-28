@@ -23,11 +23,17 @@ export class BshClient {
         this.bshEngine = bshEngine;
     }
 
-    private async handleResponse<T = unknown>(response: Response, params: BshClientFnParams<T>, type: 'json'): Promise<BshResponse<T> | undefined>
-    private async handleResponse<T = unknown>(response: Response, params: BshClientFnParams<T>, type: 'blob'): Promise<Blob | undefined>
-    private async handleResponse<T = unknown>(response: Response, params: BshClientFnParams<T>, type: 'json' | 'blob'): Promise<BshResponse<T> | Blob | undefined> {
+    private async handleResponse<T = any>(response: Response, params: BshClientFnParams<T>, type: 'json'): Promise<BshResponse<T> | undefined>
+    private async handleResponse<T = any>(response: Response, params: BshClientFnParams<T>, type: 'blob'): Promise<Blob | undefined>
+    private async handleResponse<T = any>(response: Response, params: BshClientFnParams<T>, type: 'json' | 'blob'): Promise<BshResponse<T> | Blob | undefined> {
         if (!response.ok) {
-            const error = new BshError(response.status, params.path, await response.json());
+            let error = new BshError(response.status, params.path, await response.json());
+            if (this.bshEngine?.getErrorInterceptors().length) {
+                for (const interceptor of this.bshEngine.getErrorInterceptors()) {
+                    const newError = await interceptor(error, error.response, params as BshClientFnParams<any>);
+                    if (newError) error = newError;
+                }
+            }
             if (params.bshOptions.onError) {
                 params.bshOptions.onError(error);
                 return undefined;
@@ -35,14 +41,21 @@ export class BshClient {
             else throw error;
         }
 
-
         if (type === 'json') {
             const data = await response.json();
             if (params.bshOptions.onSuccess) {
                 params.bshOptions.onSuccess(data);
                 return undefined;
             }
-            else return data;
+            let result = data as BshResponse<T>;
+            result.api = params.api;
+            if (this.bshEngine?.getPostInterceptors().length) {
+                for (const interceptor of this.bshEngine.getPostInterceptors()) {
+                    const newResult = await interceptor(result, params as BshClientFnParams<any>);
+                    if (newResult) result = newResult as BshResponse<T>;
+                }
+            }
+            return result;
         }
         else if (type === 'blob') {
             const blob = await response.blob();
@@ -70,13 +83,10 @@ export class BshClient {
             const refreshToken = await refreshTokenFn();
             if (!refreshToken || !this.bshEngine) return auth;
 
-            console.log('Refreshing token...');
             const response = await this.bshEngine.auth.refreshToken({
                 payload: { refresh: refreshToken },
-                onError: (error) => console.error('Failed to refresh token:', error)
+                onError: () => {}
             });
-
-            console.log('Response:', response);
 
             if (response) return {
                 type: 'JWT',

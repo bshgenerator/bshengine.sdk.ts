@@ -1,5 +1,5 @@
 import { BshCallbackParams } from "@src/services";
-import { BshSearch } from "@types";
+import { BshError, BshResponse, BshSearch } from "@types";
 
 export type BshClientFnParams<T = unknown, R = T> = {
     path: string,
@@ -12,7 +12,8 @@ export type BshClientFnParams<T = unknown, R = T> = {
         queryParams?: Record<string, string>,
         headers?: Record<string, string>,
     },
-    bshOptions: BshCallbackParams<T, R>
+    bshOptions: BshCallbackParams<T, R>,
+    api?: string
 }
 
 export type BshClientFn = <T = unknown>(params: BshClientFnParams<T>) => Promise<Response>;
@@ -36,3 +37,7 @@ export type AuthToken = {
 export type BshAuthFn = () => Promise<AuthToken | undefined | null>;
 
 export type BshRefreshTokenFn = () => Promise<string | undefined | null>;
+
+export type BshPostInterceptor<T = any> = (result: BshResponse<T>, params?: BshClientFnParams<T>) => Promise<BshResponse<T>>;
+export type BshPreInterceptor<T = any> = (params: BshClientFnParams<T>) => Promise<BshClientFnParams<T>>;
+export type BshErrorInterceptor<T = any> = (error: BshError, response?: BshResponse<T>, params?: BshClientFnParams<T>) => Promise<BshError | undefined>;

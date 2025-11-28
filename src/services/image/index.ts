@@ -28,6 +28,7 @@ export class ImageService {
                 body: formData,
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'image.upload',
         });
     }
 }

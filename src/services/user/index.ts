@@ -16,6 +16,7 @@ export class UserService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'user.me',
         });
     }
 
@@ -31,6 +32,7 @@ export class UserService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'user.init',
         });
     }
 
@@ -46,6 +48,7 @@ export class UserService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'user.updateProfile',
         });
     }
 
@@ -61,6 +64,7 @@ export class UserService {
                 body: formData,
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'user.updatePicture',
         });
     }
 
@@ -76,6 +80,7 @@ export class UserService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'user.updatePassword',
         });
     }
 
@@ -88,6 +93,7 @@ export class UserService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'user.getById',
         });
     }
 
@@ -103,6 +109,7 @@ export class UserService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'user.search',
         });
     }
 
@@ -130,6 +137,7 @@ export class UserService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'user.list',
         });
     }
 
@@ -145,6 +153,7 @@ export class UserService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'user.update',
         });
     }
 
@@ -156,6 +165,7 @@ export class UserService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'user.deleteById',
         });
     }
 }

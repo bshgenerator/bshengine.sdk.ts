@@ -16,6 +16,7 @@ export class BshUtilsService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'utils.triggerPlugins',
         });
     }
 
@@ -27,6 +28,7 @@ export class BshUtilsService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'utils.triggerActions',
         });
     }
 }

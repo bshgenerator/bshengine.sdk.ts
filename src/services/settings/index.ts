@@ -16,6 +16,7 @@ export class SettingsService {
                 requestFormat: 'json'
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'settings.load',
         });
     }
 
@@ -31,6 +32,7 @@ export class SettingsService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'settings.update',
         });
     }
 }

@@ -20,6 +20,7 @@ export class ApiKeyService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'api-key.create',
         });
     }
 
@@ -42,6 +43,7 @@ export class ApiKeyService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'api-key.revoke',
         });
     }
 
@@ -54,6 +56,7 @@ export class ApiKeyService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'api-key.getById',
         });
     }
 
@@ -69,6 +72,7 @@ export class ApiKeyService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'api-key.search',
         });
     }
 
@@ -96,6 +100,7 @@ export class ApiKeyService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'api-key.list',
         });
     }
 
@@ -107,6 +112,7 @@ export class ApiKeyService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'api-key.deleteById',
         });
     }
 }

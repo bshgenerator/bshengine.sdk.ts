@@ -20,6 +20,7 @@ export class CachingService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'caching.findById',
         });
     }
 
@@ -35,6 +36,7 @@ export class CachingService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'caching.search',
         });
     }
 
@@ -46,6 +48,7 @@ export class CachingService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'caching.names',
         });
     }
 
@@ -57,6 +60,7 @@ export class CachingService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'caching.clearById',
         });
     }
 
@@ -68,6 +72,7 @@ export class CachingService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'caching.clearAll',
         });
     }
 }
