@@ -27,7 +27,27 @@ describe('CachingService', () => {
 
     describe('findById', () => {
         it('should call client.get with correct parameters', async () => {
-            const mockCacheInfo: CacheInfo = { id: 'cache1', name: 'test-cache' } as CacheInfo;
+            const mockCacheInfo: CacheInfo = {
+                name: 'test-cache',
+                estimatedSize: 0,
+                requestCount: 0,
+                hitCount: 0,
+                hitRate: 0,
+                missCount: 0,
+                missRate: 0,
+                expireAfterWrite: null,
+                expireAfterAccess: null,
+                maximumSize: 1000,
+                currentSize: 0,
+                evictionCount: 0,
+                evictionWeight: 0,
+                loadCount: 0,
+                totalLoadTime: 0,
+                averageLoadPenalty: 0,
+                loadSuccessCount: 0,
+                loadFailureCount: 0,
+                loadFailureRate: 0
+            };
             const mockResponse = {
                 data: [mockCacheInfo],
                 code: 200,
@@ -60,7 +80,27 @@ describe('CachingService', () => {
 
     describe('search', () => {
         it('should call client.post with correct parameters', async () => {
-            const mockCacheInfo: CacheInfo = { id: 'cache1', name: 'test-cache' } as CacheInfo;
+            const mockCacheInfo: CacheInfo = {
+                name: 'test-cache',
+                estimatedSize: 0,
+                requestCount: 0,
+                hitCount: 0,
+                hitRate: 0,
+                missCount: 0,
+                missRate: 0,
+                expireAfterWrite: null,
+                expireAfterAccess: null,
+                maximumSize: 1000,
+                currentSize: 0,
+                evictionCount: 0,
+                evictionWeight: 0,
+                loadCount: 0,
+                totalLoadTime: 0,
+                averageLoadPenalty: 0,
+                loadSuccessCount: 0,
+                loadFailureCount: 0,
+                loadFailureRate: 0
+            };
             const mockResponse = {
                 data: [mockCacheInfo],
                 code: 200,

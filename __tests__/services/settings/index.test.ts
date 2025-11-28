@@ -27,8 +27,8 @@ describe('SettingsService', () => {
         it('should call client.get with correct parameters', async () => {
             const mockSettings: BshSettings = {
                 name: 'BshEngine',
-                config: {}
-            } as BshSettings;
+                api: {}
+            };
             const mockResponse = {
                 data: [mockSettings],
                 code: 200,
@@ -62,8 +62,8 @@ describe('SettingsService', () => {
         it('should call client.put with correct parameters and add name', async () => {
             const mockSettings: BshSettings = {
                 name: 'BshEngine',
-                config: { theme: 'dark' }
-            } as BshSettings;
+                api: {}
+            };
             const mockResponse = {
                 data: [mockSettings],
                 code: 200,
@@ -74,8 +74,13 @@ describe('SettingsService', () => {
             mockPut.mockResolvedValue(mockResponse);
 
             const updatePayload: BshSettings = {
-                config: { theme: 'dark' }
-            } as BshSettings;
+                name: 'BshEngine',
+                api: {
+                    response: {
+                        showSql: false
+                    }
+                }
+            };
 
             const params = {
                 payload: updatePayload,

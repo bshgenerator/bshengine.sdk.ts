@@ -27,7 +27,18 @@ describe('ApiKeyService', () => {
 
     describe('create', () => {
         it('should call client.post with correct parameters', async () => {
-            const mockApiKey: BshApiKeys = { id: '1', name: 'Test Key' } as BshApiKeys;
+            const mockApiKey: BshApiKeys = {
+                id: 1,
+                name: 'Test Key',
+                description: 'Test description',
+                duration: 3600,
+                type: 'PERSONAL',
+                scopes: [],
+                apiKey: 'bsh_1234567890',
+                startedAt: { $date: new Date().toISOString() },
+                status: 'ACTIVE',
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockApiKey],
                 code: 201,
@@ -37,7 +48,13 @@ describe('ApiKeyService', () => {
             };
             mockPost.mockResolvedValue(mockResponse);
 
-            const payload: BshApiKeysForm = { name: 'Test Key' } as BshApiKeysForm;
+            const payload: BshApiKeysForm = {
+                name: 'Test Key',
+                description: 'Test description',
+                duration: 3600,
+                type: 'PERSONAL',
+                scopes: []
+            };
             const params = {
                 payload,
                 onSuccess: vi.fn(),
@@ -65,7 +82,18 @@ describe('ApiKeyService', () => {
 
     describe('details', () => {
         it('should call client.get with correct parameters', async () => {
-            const mockApiKey: BshApiKeys = { id: '1', name: 'Test Key' } as BshApiKeys;
+            const mockApiKey: BshApiKeys = {
+                id: 1,
+                name: 'Test Key',
+                description: 'Test description',
+                duration: 3600,
+                type: 'PERSONAL',
+                scopes: [],
+                apiKey: 'bsh_1234567890',
+                startedAt: { $date: new Date().toISOString() },
+                status: 'ACTIVE',
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockApiKey],
                 code: 200,
@@ -97,7 +125,18 @@ describe('ApiKeyService', () => {
 
     describe('revoke', () => {
         it('should call client.delete with correct parameters', async () => {
-            const mockApiKey: BshApiKeys = { id: '1', name: 'Test Key' } as BshApiKeys;
+            const mockApiKey: BshApiKeys = {
+                id: 1,
+                name: 'Test Key',
+                description: 'Test description',
+                duration: 3600,
+                type: 'PERSONAL',
+                scopes: [],
+                apiKey: 'bsh_1234567890',
+                startedAt: { $date: new Date().toISOString() },
+                status: 'ACTIVE',
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockApiKey],
                 code: 200,
@@ -130,7 +169,18 @@ describe('ApiKeyService', () => {
 
     describe('getById', () => {
         it('should call client.get with correct parameters', async () => {
-            const mockApiKey: BshApiKeys = { id: '1', name: 'Test Key' } as BshApiKeys;
+            const mockApiKey: BshApiKeys = {
+                id: 1,
+                name: 'Test Key',
+                description: 'Test description',
+                duration: 3600,
+                type: 'PERSONAL',
+                scopes: [],
+                apiKey: 'bsh_1234567890',
+                startedAt: { $date: new Date().toISOString() },
+                status: 'ACTIVE',
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockApiKey],
                 code: 200,
@@ -163,7 +213,18 @@ describe('ApiKeyService', () => {
 
     describe('search', () => {
         it('should call client.post with correct parameters', async () => {
-            const mockApiKey: BshApiKeys = { id: '1', name: 'Test Key' } as BshApiKeys;
+            const mockApiKey: BshApiKeys = {
+                id: 1,
+                name: 'Test Key',
+                description: 'Test description',
+                duration: 3600,
+                type: 'PERSONAL',
+                scopes: [],
+                apiKey: 'bsh_1234567890',
+                startedAt: { $date: new Date().toISOString() },
+                status: 'ACTIVE',
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockApiKey],
                 code: 200,
@@ -205,7 +266,18 @@ describe('ApiKeyService', () => {
 
     describe('list', () => {
         it('should call client.get with correct parameters and no query params', async () => {
-            const mockApiKey: BshApiKeys = { id: '1', name: 'Test Key' } as BshApiKeys;
+            const mockApiKey: BshApiKeys = {
+                id: 1,
+                name: 'Test Key',
+                description: 'Test description',
+                duration: 3600,
+                type: 'PERSONAL',
+                scopes: [],
+                apiKey: 'bsh_1234567890',
+                startedAt: { $date: new Date().toISOString() },
+                status: 'ACTIVE',
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockApiKey],
                 code: 200,
@@ -235,7 +307,18 @@ describe('ApiKeyService', () => {
         });
 
         it('should call client.get with query params', async () => {
-            const mockApiKey: BshApiKeys = { id: '1', name: 'Test Key' } as BshApiKeys;
+            const mockApiKey: BshApiKeys = {
+                id: 1,
+                name: 'Test Key',
+                description: 'Test description',
+                duration: 3600,
+                type: 'PERSONAL',
+                scopes: [],
+                apiKey: 'bsh_1234567890',
+                startedAt: { $date: new Date().toISOString() },
+                status: 'ACTIVE',
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockApiKey],
                 code: 200,
@@ -273,7 +356,18 @@ describe('ApiKeyService', () => {
 
     describe('deleteById', () => {
         it('should call client.delete with correct parameters', async () => {
-            const mockApiKey: BshApiKeys = { id: '1', name: 'Test Key' } as BshApiKeys;
+            const mockApiKey: BshApiKeys = {
+                id: 1,
+                name: 'Test Key',
+                description: 'Test description',
+                duration: 3600,
+                type: 'PERSONAL',
+                scopes: [],
+                apiKey: 'bsh_1234567890',
+                startedAt: { $date: new Date().toISOString() },
+                status: 'ACTIVE',
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockApiKey],
                 code: 200,

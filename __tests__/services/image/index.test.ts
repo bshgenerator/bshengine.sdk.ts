@@ -25,9 +25,14 @@ describe('ImageService', () => {
         it('should call client.post with FormData and correct parameters', async () => {
             const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
             const mockUploadResponse: UploadResponse = {
-                url: 'https://example.com/image.jpg',
-                id: 'image-123'
-            } as UploadResponse;
+                fileId: 'image-123',
+                publicId: 'public-123',
+                assetId: 'asset-123',
+                uri: 'https://example.com/image.jpg',
+                secureUri: 'https://example.com/image.jpg',
+                tags: [],
+                context: {}
+            };
             const mockResponse = {
                 data: [mockUploadResponse],
                 code: 200,
@@ -59,9 +64,14 @@ describe('ImageService', () => {
         it('should include namespace in FormData when provided', async () => {
             const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
             const mockUploadResponse: UploadResponse = {
-                url: 'https://example.com/image.jpg',
-                id: 'image-123'
-            } as UploadResponse;
+                fileId: 'image-123',
+                publicId: 'public-123',
+                assetId: 'asset-123',
+                uri: 'https://example.com/image.jpg',
+                secureUri: 'https://example.com/image.jpg',
+                tags: [],
+                context: {}
+            };
             const mockResponse = {
                 data: [mockUploadResponse],
                 code: 200,
@@ -90,9 +100,14 @@ describe('ImageService', () => {
         it('should include assetId in FormData when provided', async () => {
             const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
             const mockUploadResponse: UploadResponse = {
-                url: 'https://example.com/image.jpg',
-                id: 'image-123'
-            } as UploadResponse;
+                fileId: 'image-123',
+                publicId: 'public-123',
+                assetId: 'asset-123',
+                uri: 'https://example.com/image.jpg',
+                secureUri: 'https://example.com/image.jpg',
+                tags: [],
+                context: {}
+            };
             const mockResponse = {
                 data: [mockUploadResponse],
                 code: 200,
@@ -121,14 +136,21 @@ describe('ImageService', () => {
         it('should include options in FormData when provided', async () => {
             const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
             const uploadOptions: UploadOptions = {
+                tags: [],
+                context: {},
                 width: 800,
                 height: 600,
                 quality: 90
-            } as UploadOptions;
+            };
             const mockUploadResponse: UploadResponse = {
-                url: 'https://example.com/image.jpg',
-                id: 'image-123'
-            } as UploadResponse;
+                fileId: 'image-123',
+                publicId: 'public-123',
+                assetId: 'asset-123',
+                uri: 'https://example.com/image.jpg',
+                secureUri: 'https://example.com/image.jpg',
+                tags: [],
+                context: {}
+            };
             const mockResponse = {
                 data: [mockUploadResponse],
                 code: 200,

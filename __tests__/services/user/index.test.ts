@@ -30,10 +30,13 @@ describe('UserService', () => {
     describe('me', () => {
         it('should call client.get with correct parameters', async () => {
             const mockUser: BshUser = {
-                id: '1',
+                userId: '1',
                 email: 'test@example.com',
-                profile: { firstName: 'Test', lastName: 'User' }
-            } as BshUser;
+                roles: [],
+                status: 'ACTIVATED',
+                profile: { firstName: 'Test', lastName: 'User' },
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockUser],
                 code: 200,
@@ -66,10 +69,13 @@ describe('UserService', () => {
     describe('init', () => {
         it('should call client.post with correct parameters', async () => {
             const mockUser: BshUser = {
-                id: '1',
+                userId: '1',
                 email: 'test@example.com',
-                profile: { firstName: 'Test', lastName: 'User' }
-            } as BshUser;
+                roles: [],
+                status: 'ACTIVATED',
+                profile: { firstName: 'Test', lastName: 'User' },
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockUser],
                 code: 201,
@@ -113,10 +119,13 @@ describe('UserService', () => {
     describe('updateProfile', () => {
         it('should call client.put with correct parameters', async () => {
             const mockUser: BshUser = {
-                id: '1',
+                userId: '1',
                 email: 'test@example.com',
-                profile: { firstName: 'Updated', lastName: 'User' }
-            } as BshUser;
+                roles: [],
+                status: 'ACTIVATED',
+                profile: { firstName: 'Updated', lastName: 'User' },
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockUser],
                 code: 200,
@@ -155,10 +164,13 @@ describe('UserService', () => {
     describe('updatePicture', () => {
         it('should call client.post with FormData', async () => {
             const mockUser: BshUser = {
-                id: '1',
+                userId: '1',
                 email: 'test@example.com',
-                profile: { firstName: 'Test', lastName: 'User' }
-            } as BshUser;
+                roles: [],
+                status: 'ACTIVATED',
+                profile: { firstName: 'Test', lastName: 'User' },
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockUser],
                 code: 200,
@@ -228,10 +240,13 @@ describe('UserService', () => {
     describe('getById', () => {
         it('should call client.get with correct parameters', async () => {
             const mockUser: BshUser = {
-                id: '1',
+                userId: '1',
                 email: 'test@example.com',
-                profile: { firstName: 'Test', lastName: 'User' }
-            } as BshUser;
+                roles: [],
+                status: 'ACTIVATED',
+                profile: { firstName: 'Test', lastName: 'User' },
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockUser],
                 code: 200,
@@ -265,10 +280,13 @@ describe('UserService', () => {
     describe('search', () => {
         it('should call client.post with correct parameters', async () => {
             const mockUser: BshUser = {
-                id: '1',
+                userId: '1',
                 email: 'test@example.com',
-                profile: { firstName: 'Test', lastName: 'User' }
-            } as BshUser;
+                roles: [],
+                status: 'ACTIVATED',
+                profile: { firstName: 'Test', lastName: 'User' },
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockUser],
                 code: 200,
@@ -311,10 +329,13 @@ describe('UserService', () => {
     describe('list', () => {
         it('should call client.get with query params', async () => {
             const mockUser: BshUser = {
-                id: '1',
+                userId: '1',
                 email: 'test@example.com',
-                profile: { firstName: 'Test', lastName: 'User' }
-            } as BshUser;
+                roles: [],
+                status: 'ACTIVATED',
+                profile: { firstName: 'Test', lastName: 'User' },
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockUser],
                 code: 200,
@@ -351,10 +372,13 @@ describe('UserService', () => {
 
         it('should call client.get without query params', async () => {
             const mockUser: BshUser = {
-                id: '1',
+                userId: '1',
                 email: 'test@example.com',
-                profile: { firstName: 'Test', lastName: 'User' }
-            } as BshUser;
+                roles: [],
+                status: 'ACTIVATED',
+                profile: { firstName: 'Test', lastName: 'User' },
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockUser],
                 code: 200,
@@ -387,10 +411,13 @@ describe('UserService', () => {
     describe('update', () => {
         it('should call client.put with correct parameters', async () => {
             const mockUser: BshUser = {
-                id: '1',
+                userId: '1',
                 email: 'updated@example.com',
-                profile: { firstName: 'Updated', lastName: 'User' }
-            } as BshUser;
+                roles: [],
+                status: 'ACTIVATED',
+                profile: { firstName: 'Updated', lastName: 'User' },
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockUser],
                 code: 200,
@@ -431,10 +458,13 @@ describe('UserService', () => {
     describe('deleteById', () => {
         it('should call client.delete with correct parameters', async () => {
             const mockUser: BshUser = {
-                id: '1',
+                userId: '1',
                 email: 'test@example.com',
-                profile: { firstName: 'Test', lastName: 'User' }
-            } as BshUser;
+                roles: [],
+                status: 'ACTIVATED',
+                profile: { firstName: 'Test', lastName: 'User' },
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockUser],
                 code: 200,

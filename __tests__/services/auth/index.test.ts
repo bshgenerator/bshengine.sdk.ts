@@ -84,10 +84,13 @@ describe('AuthService', () => {
     describe('register', () => {
         it('should call client.post with correct parameters', async () => {
             const mockUser: BshUser = {
-                id: '1',
+                userId: '1',
                 email: 'test@example.com',
-                profile: { firstName: 'Test', lastName: 'User' }
-            } as BshUser;
+                roles: [],
+                status: 'ACTIVATED',
+                profile: { firstName: 'Test', lastName: 'User' },
+                persistenceId: '1'
+            };
             const mockResponse = {
                 data: [mockUser],
                 code: 201,

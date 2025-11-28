@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BshClient } from '../../src/client/bsh-client';
-import { BshClientFn, BshAuthFn } from '../../src/client/types';
+import { BshAuthFn } from '../../src/client/types';
 import { BshError } from '../../src/types';
 
 describe('BshClient', () => {
-    let mockHttpClient: BshClientFn;
+    let mockHttpClient: ReturnType<typeof vi.fn>;
     let mockAuthFn: BshAuthFn | undefined;
     let client: BshClient;
 

@@ -24,9 +24,11 @@ describe('BshUtilsService', () => {
     describe('triggerPlugins', () => {
         it('should call client.get with correct parameters', async () => {
             const mockPlugin: BshTriggerPlugin = {
-                id: 'plugin1',
-                name: 'Test Plugin'
-            } as BshTriggerPlugin;
+                name: 'Test Plugin',
+                category: 'test',
+                input: {},
+                output: {}
+            };
             const mockResponse = {
                 data: [mockPlugin],
                 code: 200,
