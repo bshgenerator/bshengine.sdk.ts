@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BshClient } from '../../src/client/bsh-client';
-import { BshAuthFn } from '../../src/client/types';
-import { BshError } from '../../src/types';
+import { BshAuthFn, BshPostInterceptor, BshErrorInterceptor } from '../../src/client/types';
+import { BshError, BshResponse } from '../../src/types';
+import { BshEngine } from '../../src/bshengine';
 
 describe('BshClient', () => {
     let mockHttpClient: ReturnType<typeof vi.fn>;
@@ -338,6 +339,367 @@ describe('BshClient', () => {
 
             expect(onDownload).toHaveBeenCalled();
             expect(result).toBeUndefined();
+        });
+    });
+
+    describe('interceptors', () => {
+        let engine: BshEngine;
+        let mockHttpClient: ReturnType<typeof vi.fn>;
+
+        beforeEach(() => {
+            engine = new BshEngine();
+            mockHttpClient = vi.fn();
+        });
+
+        describe('postInterceptor', () => {
+            it('should call post interceptor on successful response', async () => {
+                const mockData: BshResponse<{ id: number }> = {
+                    data: [{ id: 1 }],
+                    code: 200,
+                    status: 'OK',
+                    error: '',
+                    timestamp: Date.now()
+                };
+                const response = new Response(JSON.stringify(mockData), { status: 200 });
+                mockHttpClient = vi.fn().mockResolvedValue(response);
+                
+                const postInterceptor: BshPostInterceptor = vi.fn().mockImplementation(async (result) => {
+                    return result;
+                });
+
+                engine.postInterceptor(postInterceptor);
+                engine.withClient(mockHttpClient);
+                const client = new BshClient('', mockHttpClient, undefined, undefined, engine);
+
+                await client.get({
+                    path: '/test',
+                    options: {},
+                    bshOptions: {}
+                });
+
+                expect(postInterceptor).toHaveBeenCalledTimes(1);
+                expect(postInterceptor).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        data: [{ id: 1 }],
+                        code: 200
+                    }),
+                    expect.any(Object)
+                );
+            });
+
+            it('should allow post interceptor to modify response', async () => {
+                const mockData: BshResponse<{ id: number }> = {
+                    data: [{ id: 1 }],
+                    code: 200,
+                    status: 'OK',
+                    error: '',
+                    timestamp: Date.now()
+                };
+                const response = new Response(JSON.stringify(mockData), { status: 200 });
+                mockHttpClient = vi.fn().mockResolvedValue(response);
+                
+                const modifiedData: BshResponse<{ id: number; modified: boolean }> = {
+                    data: [{ id: 1, modified: true }],
+                    code: 200,
+                    status: 'OK',
+                    error: '',
+                    timestamp: Date.now()
+                };
+
+                const postInterceptor: BshPostInterceptor = vi.fn().mockResolvedValue(modifiedData);
+
+                engine.postInterceptor(postInterceptor);
+                engine.withClient(mockHttpClient);
+                const client = new BshClient('', mockHttpClient, undefined, undefined, engine);
+
+                const result = await client.get({
+                    path: '/test',
+                    options: {},
+                    bshOptions: {}
+                });
+
+                expect(result).toEqual(modifiedData);
+                expect(postInterceptor).toHaveBeenCalledTimes(1);
+            });
+
+            it('should call multiple post interceptors in order', async () => {
+                const mockData: BshResponse<{ id: number }> = {
+                    data: [{ id: 1 }],
+                    code: 200,
+                    status: 'OK',
+                    error: '',
+                    timestamp: Date.now()
+                };
+                const response = new Response(JSON.stringify(mockData), { status: 200 });
+                mockHttpClient = vi.fn().mockResolvedValue(response);
+                
+                const callOrder: number[] = [];
+                const interceptor1: BshPostInterceptor = vi.fn().mockImplementation(async (result) => {
+                    callOrder.push(1);
+                    return result;
+                });
+                const interceptor2: BshPostInterceptor = vi.fn().mockImplementation(async (result) => {
+                    callOrder.push(2);
+                    return result;
+                });
+
+                engine.postInterceptor(interceptor1);
+                engine.postInterceptor(interceptor2);
+                engine.withClient(mockHttpClient);
+                const client = new BshClient('', mockHttpClient, undefined, undefined, engine);
+
+                await client.get({
+                    path: '/test',
+                    options: {},
+                    bshOptions: {}
+                });
+
+                expect(interceptor1).toHaveBeenCalledTimes(1);
+                expect(interceptor2).toHaveBeenCalledTimes(1);
+                expect(callOrder).toEqual([1, 2]);
+            });
+
+            it('should chain post interceptors correctly', async () => {
+                const mockData: BshResponse<{ id: number }> = {
+                    data: [{ id: 1 }],
+                    code: 200,
+                    status: 'OK',
+                    error: '',
+                    timestamp: Date.now()
+                };
+                const response = new Response(JSON.stringify(mockData), { status: 200 });
+                mockHttpClient = vi.fn().mockResolvedValue(response);
+                
+                const interceptor1: BshPostInterceptor = vi.fn().mockImplementation(async (result) => {
+                    return { ...result, data: [{ id: 2 }] };
+                });
+                const interceptor2: BshPostInterceptor = vi.fn().mockImplementation(async (result) => {
+                    return { ...result, data: [{ id: 3 }] };
+                });
+
+                engine.postInterceptor(interceptor1);
+                engine.postInterceptor(interceptor2);
+                engine.withClient(mockHttpClient);
+                const client = new BshClient('', mockHttpClient, undefined, undefined, engine);
+
+                const result = await client.get({
+                    path: '/test',
+                    options: {},
+                    bshOptions: {}
+                });
+
+                expect(interceptor1).toHaveBeenCalledWith(
+                    expect.objectContaining({ data: [{ id: 1 }] }),
+                    expect.any(Object)
+                );
+                expect(interceptor2).toHaveBeenCalledWith(
+                    expect.objectContaining({ data: [{ id: 2 }] }),
+                    expect.any(Object)
+                );
+                expect(result?.data).toEqual([{ id: 3 }]);
+            });
+
+            it('should not call post interceptor when onSuccess callback is provided', async () => {
+                const mockData: BshResponse<{ id: number }> = {
+                    data: [{ id: 1 }],
+                    code: 200,
+                    status: 'OK',
+                    error: '',
+                    timestamp: Date.now()
+                };
+                const response = new Response(JSON.stringify(mockData), { status: 200 });
+                mockHttpClient = vi.fn().mockResolvedValue(response);
+                
+                const postInterceptor: BshPostInterceptor = vi.fn();
+                const onSuccess = vi.fn();
+
+                engine.postInterceptor(postInterceptor);
+                engine.withClient(mockHttpClient);
+                const client = new BshClient('', mockHttpClient, undefined, undefined, engine);
+
+                await client.get({
+                    path: '/test',
+                    options: {},
+                    bshOptions: { onSuccess }
+                });
+
+                expect(postInterceptor).not.toHaveBeenCalled();
+                expect(onSuccess).toHaveBeenCalled();
+            });
+        });
+
+        describe('errorInterceptor', () => {
+            it('should call error interceptor on error response', async () => {
+                const mockError = {
+                    data: [],
+                    code: 404,
+                    status: 'Not Found',
+                    error: 'Resource not found',
+                    timestamp: Date.now()
+                };
+                const response = new Response(JSON.stringify(mockError), { status: 404 });
+                mockHttpClient = vi.fn().mockResolvedValue(response);
+                
+                const errorInterceptor: BshErrorInterceptor = vi.fn().mockImplementation(async (error) => {
+                    return error;
+                });
+
+                engine.errorInterceptor(errorInterceptor);
+                engine.withClient(mockHttpClient);
+                const client = new BshClient('', mockHttpClient, undefined, undefined, engine);
+
+                await expect(client.get({
+                    path: '/test',
+                    options: {},
+                    bshOptions: {}
+                })).rejects.toThrow(BshError);
+
+                expect(errorInterceptor).toHaveBeenCalledTimes(1);
+                expect(errorInterceptor).toHaveBeenCalledWith(
+                    expect.any(BshError),
+                    expect.objectContaining({
+                        code: 404,
+                        error: 'Resource not found'
+                    }),
+                    expect.any(Object)
+                );
+            });
+
+            it('should allow error interceptor to modify error', async () => {
+                const mockError = {
+                    data: [],
+                    code: 404,
+                    status: 'Not Found',
+                    error: 'Resource not found',
+                    timestamp: Date.now()
+                };
+                const response = new Response(JSON.stringify(mockError), { status: 404 });
+                mockHttpClient = vi.fn().mockResolvedValue(response);
+                
+                const modifiedError = new BshError(500, '/test', {
+                    data: [],
+                    code: 500,
+                    status: 'Internal Server Error',
+                    error: 'Modified error',
+                    timestamp: Date.now()
+                });
+
+                const errorInterceptor = vi.fn<BshErrorInterceptor>().mockResolvedValue(modifiedError);
+
+                engine.errorInterceptor(errorInterceptor);
+                engine.withClient(mockHttpClient);
+                const client = new BshClient('', mockHttpClient, undefined, undefined, engine);
+
+                await expect(client.get({
+                    path: '/test',
+                    options: {},
+                    bshOptions: {}
+                })).rejects.toThrow(BshError);
+
+                expect(errorInterceptor).toHaveBeenCalled();
+                // Verify the interceptor was called with the original error
+                const callArgs = errorInterceptor.mock.calls[0];
+                expect(callArgs[0]).toBeInstanceOf(BshError);
+                expect(callArgs[0].status).toBe(404);
+            });
+
+            it('should call multiple error interceptors in order', async () => {
+                const mockError = {
+                    data: [],
+                    code: 500,
+                    status: 'Error',
+                    error: 'Server error',
+                    timestamp: Date.now()
+                };
+                const response = new Response(JSON.stringify(mockError), { status: 500 });
+                mockHttpClient = vi.fn().mockResolvedValue(response);
+                
+                const callOrder: number[] = [];
+                const interceptor1: BshErrorInterceptor = vi.fn().mockImplementation(async (error) => {
+                    callOrder.push(1);
+                    return error;
+                });
+                const interceptor2: BshErrorInterceptor = vi.fn().mockImplementation(async (error) => {
+                    callOrder.push(2);
+                    return error;
+                });
+
+                engine.errorInterceptor(interceptor1);
+                engine.errorInterceptor(interceptor2);
+                engine.withClient(mockHttpClient);
+                const client = new BshClient('', mockHttpClient, undefined, undefined, engine);
+
+                await expect(client.get({
+                    path: '/test',
+                    options: {},
+                    bshOptions: {}
+                })).rejects.toThrow(BshError);
+
+                expect(interceptor1).toHaveBeenCalledTimes(1);
+                expect(interceptor2).toHaveBeenCalledTimes(1);
+                expect(callOrder).toEqual([1, 2]);
+            });
+
+            it('should call error interceptor before onError callback', async () => {
+                const mockError = {
+                    data: [],
+                    code: 500,
+                    status: 'Error',
+                    error: 'Server error',
+                    timestamp: Date.now()
+                };
+                const response = new Response(JSON.stringify(mockError), { status: 500 });
+                mockHttpClient = vi.fn().mockResolvedValue(response);
+                
+                const callOrder: string[] = [];
+                const errorInterceptor: BshErrorInterceptor = vi.fn().mockImplementation(async (error) => {
+                    callOrder.push('interceptor');
+                    return error;
+                });
+                const onError = vi.fn().mockImplementation(() => {
+                    callOrder.push('onError');
+                });
+
+                engine.errorInterceptor(errorInterceptor);
+                engine.withClient(mockHttpClient);
+                const client = new BshClient('', mockHttpClient, undefined, undefined, engine);
+
+                await client.get({
+                    path: '/test',
+                    options: {},
+                    bshOptions: { onError }
+                });
+
+                expect(errorInterceptor).toHaveBeenCalled();
+                expect(onError).toHaveBeenCalled();
+                expect(callOrder).toEqual(['interceptor', 'onError']);
+            });
+
+            it('should handle error interceptor returning undefined', async () => {
+                const mockError = {
+                    data: [],
+                    code: 404,
+                    status: 'Not Found',
+                    error: 'Resource not found',
+                    timestamp: Date.now()
+                };
+                const response = new Response(JSON.stringify(mockError), { status: 404 });
+                mockHttpClient = vi.fn().mockResolvedValue(response);
+                
+                const errorInterceptor: BshErrorInterceptor = vi.fn().mockResolvedValue(undefined);
+
+                engine.errorInterceptor(errorInterceptor);
+                engine.withClient(mockHttpClient);
+                const client = new BshClient('', mockHttpClient, undefined, undefined, engine);
+
+                await expect(client.get({
+                    path: '/test',
+                    options: {},
+                    bshOptions: {}
+                })).rejects.toThrow(BshError);
+
+                expect(errorInterceptor).toHaveBeenCalled();
+            });
         });
     });
 });

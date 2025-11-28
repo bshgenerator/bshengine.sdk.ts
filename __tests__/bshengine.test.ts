@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BshEngine } from '../src/bshengine';
-import { BshClientFn, BshAuthFn } from '../src/client/types';
+import { BshClientFn, BshAuthFn, BshPostInterceptor, BshPreInterceptor, BshErrorInterceptor } from '../src/client/types';
 import { EntityService } from '../src/services/entities';
 import { AuthService } from '../src/services/auth';
 import { UserService } from '../src/services/user';
@@ -10,6 +10,8 @@ import { MailingService } from '../src/services/mailing';
 import { BshUtilsService } from '../src/services/utils';
 import { CachingService } from '../src/services/caching';
 import { ApiKeyService } from '../src/services/api-key';
+import { BshResponse } from '../src/types';
+import { BshError } from '../src/types';
 
 // Mock the client module
 vi.mock('../src/client/bsh-client', () => {
@@ -155,6 +157,204 @@ describe('BshEngine', () => {
                 .withAuth(mockAuthFn);
             
             expect(result).toBe(engine);
+        });
+    });
+
+    describe('interceptors', () => {
+        describe('postInterceptor', () => {
+            it('should add post interceptor and return engine instance', () => {
+                const interceptor: BshPostInterceptor = vi.fn();
+                const result = engine.postInterceptor(interceptor);
+                
+                expect(result).toBe(engine);
+                expect(engine.getPostInterceptors()).toHaveLength(1);
+                expect(engine.getPostInterceptors()[0]).toBe(interceptor);
+            });
+
+            it('should allow adding multiple post interceptors', () => {
+                const interceptor1: BshPostInterceptor = vi.fn();
+                const interceptor2: BshPostInterceptor = vi.fn();
+                
+                engine.postInterceptor(interceptor1);
+                engine.postInterceptor(interceptor2);
+                
+                expect(engine.getPostInterceptors()).toHaveLength(2);
+                expect(engine.getPostInterceptors()[0]).toBe(interceptor1);
+                expect(engine.getPostInterceptors()[1]).toBe(interceptor2);
+            });
+
+            it('should allow chaining post interceptors', () => {
+                const interceptor1: BshPostInterceptor = vi.fn();
+                const interceptor2: BshPostInterceptor = vi.fn();
+                
+                const result = engine
+                    .postInterceptor(interceptor1)
+                    .postInterceptor(interceptor2);
+                
+                expect(result).toBe(engine);
+                expect(engine.getPostInterceptors()).toHaveLength(2);
+            });
+        });
+
+        describe('preInterceptor', () => {
+            it('should add pre interceptor and return engine instance', () => {
+                const interceptor: BshPreInterceptor = vi.fn();
+                const result = engine.preInterceptor(interceptor);
+                
+                expect(result).toBe(engine);
+                expect(engine.getPreInterceptors()).toHaveLength(1);
+                expect(engine.getPreInterceptors()[0]).toBe(interceptor);
+            });
+
+            it('should allow adding multiple pre interceptors', () => {
+                const interceptor1: BshPreInterceptor = vi.fn();
+                const interceptor2: BshPreInterceptor = vi.fn();
+                
+                engine.preInterceptor(interceptor1);
+                engine.preInterceptor(interceptor2);
+                
+                expect(engine.getPreInterceptors()).toHaveLength(2);
+                expect(engine.getPreInterceptors()[0]).toBe(interceptor1);
+                expect(engine.getPreInterceptors()[1]).toBe(interceptor2);
+            });
+
+            it('should allow chaining pre interceptors', () => {
+                const interceptor1: BshPreInterceptor = vi.fn();
+                const interceptor2: BshPreInterceptor = vi.fn();
+                
+                const result = engine
+                    .preInterceptor(interceptor1)
+                    .preInterceptor(interceptor2);
+                
+                expect(result).toBe(engine);
+                expect(engine.getPreInterceptors()).toHaveLength(2);
+            });
+        });
+
+        describe('errorInterceptor', () => {
+            it('should add error interceptor and return engine instance', () => {
+                const interceptor: BshErrorInterceptor = vi.fn();
+                const result = engine.errorInterceptor(interceptor);
+                
+                expect(result).toBe(engine);
+                expect(engine.getErrorInterceptors()).toHaveLength(1);
+                expect(engine.getErrorInterceptors()[0]).toBe(interceptor);
+            });
+
+            it('should allow adding multiple error interceptors', () => {
+                const interceptor1: BshErrorInterceptor = vi.fn();
+                const interceptor2: BshErrorInterceptor = vi.fn();
+                
+                engine.errorInterceptor(interceptor1);
+                engine.errorInterceptor(interceptor2);
+                
+                expect(engine.getErrorInterceptors()).toHaveLength(2);
+                expect(engine.getErrorInterceptors()[0]).toBe(interceptor1);
+                expect(engine.getErrorInterceptors()[1]).toBe(interceptor2);
+            });
+
+            it('should allow chaining error interceptors', () => {
+                const interceptor1: BshErrorInterceptor = vi.fn();
+                const interceptor2: BshErrorInterceptor = vi.fn();
+                
+                const result = engine
+                    .errorInterceptor(interceptor1)
+                    .errorInterceptor(interceptor2);
+                
+                expect(result).toBe(engine);
+                expect(engine.getErrorInterceptors()).toHaveLength(2);
+            });
+        });
+
+        describe('getPostInterceptors', () => {
+            it('should return empty array when no interceptors added', () => {
+                expect(engine.getPostInterceptors()).toEqual([]);
+            });
+
+            it('should return all post interceptors', () => {
+                const interceptor1: BshPostInterceptor = vi.fn();
+                const interceptor2: BshPostInterceptor = vi.fn();
+                
+                engine.postInterceptor(interceptor1);
+                engine.postInterceptor(interceptor2);
+                
+                const interceptors = engine.getPostInterceptors();
+                expect(interceptors).toHaveLength(2);
+                expect(interceptors).toContain(interceptor1);
+                expect(interceptors).toContain(interceptor2);
+            });
+        });
+
+        describe('getPreInterceptors', () => {
+            it('should return empty array when no interceptors added', () => {
+                expect(engine.getPreInterceptors()).toEqual([]);
+            });
+
+            it('should return all pre interceptors', () => {
+                const interceptor1: BshPreInterceptor = vi.fn();
+                const interceptor2: BshPreInterceptor = vi.fn();
+                
+                engine.preInterceptor(interceptor1);
+                engine.preInterceptor(interceptor2);
+                
+                const interceptors = engine.getPreInterceptors();
+                expect(interceptors).toHaveLength(2);
+                expect(interceptors).toContain(interceptor1);
+                expect(interceptors).toContain(interceptor2);
+            });
+        });
+
+        describe('getErrorInterceptors', () => {
+            it('should return empty array when no interceptors added', () => {
+                expect(engine.getErrorInterceptors()).toEqual([]);
+            });
+
+            it('should return all error interceptors', () => {
+                const interceptor1: BshErrorInterceptor = vi.fn();
+                const interceptor2: BshErrorInterceptor = vi.fn();
+                
+                engine.errorInterceptor(interceptor1);
+                engine.errorInterceptor(interceptor2);
+                
+                const interceptors = engine.getErrorInterceptors();
+                expect(interceptors).toHaveLength(2);
+                expect(interceptors).toContain(interceptor1);
+                expect(interceptors).toContain(interceptor2);
+            });
+        });
+
+        describe('interceptor integration', () => {
+            it('should allow mixing all interceptor types', () => {
+                const postInterceptor: BshPostInterceptor = vi.fn();
+                const preInterceptor: BshPreInterceptor = vi.fn();
+                const errorInterceptor: BshErrorInterceptor = vi.fn();
+                
+                engine
+                    .postInterceptor(postInterceptor)
+                    .preInterceptor(preInterceptor)
+                    .errorInterceptor(errorInterceptor);
+                
+                expect(engine.getPostInterceptors()).toHaveLength(1);
+                expect(engine.getPreInterceptors()).toHaveLength(1);
+                expect(engine.getErrorInterceptors()).toHaveLength(1);
+            });
+
+            it('should maintain separate arrays for each interceptor type', () => {
+                const postInterceptor: BshPostInterceptor = vi.fn();
+                const preInterceptor: BshPreInterceptor = vi.fn();
+                const errorInterceptor: BshErrorInterceptor = vi.fn();
+                
+                engine.postInterceptor(postInterceptor);
+                engine.preInterceptor(preInterceptor);
+                engine.errorInterceptor(errorInterceptor);
+                
+                expect(engine.getPostInterceptors()).not.toContain(preInterceptor);
+                expect(engine.getPostInterceptors()).not.toContain(errorInterceptor);
+                expect(engine.getPreInterceptors()).not.toContain(postInterceptor);
+                expect(engine.getPreInterceptors()).not.toContain(errorInterceptor);
+                expect(engine.getErrorInterceptors()).not.toContain(postInterceptor);
+                expect(engine.getErrorInterceptors()).not.toContain(preInterceptor);
+            });
         });
     });
 });
