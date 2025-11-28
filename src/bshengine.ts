@@ -1,4 +1,4 @@
-import { BshAuthFn, BshClient, BshClientFn, fetchClientFn } from "@client";
+import { BshAuthFn, BshClient, BshClientFn, BshRefreshTokenFn, fetchClientFn } from "@client";
 import { ApiKeyService, AuthService, BshUtilsService, CachingService, EntityService, ImageService, MailingService, SettingsService, UserService } from "@src/services";
 import { BshEntities, BshPolicy,BshRole, BshEmailTemplate, BshEventLogs, BshSchemas, BshTypes, BshUser, SentEmail, BshTrigger, BshTriggerInstance, BshFiles, BshConfigurations } from "@types";
 
@@ -6,6 +6,7 @@ export class BshEngine {
     private host?: string;
     private clientFn: BshClientFn = fetchClientFn;
     private authFn?: BshAuthFn;
+    private refreshTokenFn?: BshRefreshTokenFn;
 
     public withHost(hostFn: string) {
         this.host = hostFn;
@@ -22,8 +23,13 @@ export class BshEngine {
         return this;
     }
 
+    public withRefreshToken(refreshTokenFn: BshRefreshTokenFn) {
+        this.refreshTokenFn = refreshTokenFn;
+        return this;
+    }
+
     private get client(): BshClient {
-        return new BshClient(this.host, this.clientFn, this.authFn);
+        return new BshClient(this.host, this.clientFn, this.authFn, this.refreshTokenFn, this);
     }
 
     public get entities() {

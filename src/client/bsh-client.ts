@@ -1,19 +1,26 @@
 import { BshResponse, BshError } from "@types";
-import { BshAuthFn, BshClientFn, BshClientFnParams, defaultClientFn } from "@src/client/types";
+import { AuthToken, BshAuthFn, BshClientFn, BshClientFnParams, BshRefreshTokenFn, defaultClientFn } from "@src/client/types";
+import { BshEngine } from "@src/bshengine";
 
 export class BshClient {
     private readonly httpClient: BshClientFn;
     private readonly authFn?: BshAuthFn;
+    private readonly refreshTokenFn?: BshRefreshTokenFn;
     private readonly host: string;
+    private readonly bshEngine?: BshEngine;
 
     constructor(
         host?: string,
         httpClient?: BshClientFn,
-        authFn?: BshAuthFn
-    ) { 
+        authFn?: BshAuthFn,
+        refreshTokenFn?: BshRefreshTokenFn,
+        bshEngine?: BshEngine
+    ) {
         this.host = host || '';
         this.httpClient = httpClient || defaultClientFn;
         this.authFn = authFn;
+        this.refreshTokenFn = refreshTokenFn;
+        this.bshEngine = bshEngine;
     }
 
     private async handleResponse<T = unknown>(response: Response, params: BshClientFnParams<T>, type: 'json'): Promise<BshResponse<T> | undefined>
@@ -47,8 +54,49 @@ export class BshClient {
         }
     }
 
-    private async getAuthHeaders(): Promise<Record<string, string>> {
-        const auth = this.authFn ? await this.authFn() : undefined;
+    private async refreshTokenIfNeeded(
+        auth: AuthToken,
+        refreshTokenFn?: BshRefreshTokenFn
+    ): Promise<AuthToken | undefined | null> {
+        if (!refreshTokenFn || !auth || auth.type !== 'JWT') return auth;
+        const accessToken = auth.token;
+        try {
+            const tokenPayload = JSON.parse(atob(accessToken.split('.')[1] || ''));
+            const exp = tokenPayload.exp;
+            const now = new Date().getTime();
+
+            if (exp && now < exp) return auth;
+
+            const refreshToken = await refreshTokenFn();
+            if (!refreshToken || !this.bshEngine) return auth;
+
+            console.log('Refreshing token...');
+            const response = await this.bshEngine.auth.refreshToken({
+                payload: { refresh: refreshToken },
+                onError: (error) => console.error('Failed to refresh token:', error)
+            });
+
+            console.log('Response:', response);
+
+            if (response) return {
+                type: 'JWT',
+                token: response.data[0].access
+            };
+
+            return auth;
+        } catch (error) {
+            return auth;
+        }
+    }
+
+    private async getAuthHeaders(params: BshClientFnParams<any>): Promise<Record<string, string>> {
+        if (params.path.includes('/api/auth/')) return {};
+
+        let auth = this.authFn ? await this.authFn() : undefined;
+        if (auth) {
+            auth = await this.refreshTokenIfNeeded(auth, this.refreshTokenFn);
+        }
+
         let authHeaders = {};
         if (auth) {
             if (auth.type === 'JWT') {
@@ -66,7 +114,7 @@ export class BshClient {
     }
 
     async get<T = unknown>(params: BshClientFnParams<T>): Promise<BshResponse<T> | undefined> {
-        const authHeaders = await this.getAuthHeaders();
+        const authHeaders = await this.getAuthHeaders(params);
 
         const response = await this.httpClient({
             ...params,
@@ -84,7 +132,7 @@ export class BshClient {
     }
 
     async post<T = unknown, R = T>(params: BshClientFnParams<T, R>): Promise<BshResponse<R> | undefined> {
-        const authHeaders = await this.getAuthHeaders();
+        const authHeaders = await this.getAuthHeaders(params);
         const response = await this.httpClient({
             ...params,
             path: `${this.host}${params.path}`,
@@ -101,7 +149,7 @@ export class BshClient {
     }
 
     async put<T = unknown>(params: BshClientFnParams<T>): Promise<BshResponse<T> | undefined> {
-        const authHeaders = await this.getAuthHeaders();
+        const authHeaders = await this.getAuthHeaders(params);
         const response = await this.httpClient({
             ...params,
             path: `${this.host}${params.path}`,
@@ -118,7 +166,7 @@ export class BshClient {
     }
 
     async delete<T = unknown>(params: BshClientFnParams<T>): Promise<BshResponse<T> | undefined> {
-        const authHeaders = await this.getAuthHeaders();
+        const authHeaders = await this.getAuthHeaders(params);
         const response = await this.httpClient({
             ...params,
             path: `${this.host}${params.path}`,
@@ -135,7 +183,7 @@ export class BshClient {
     }
 
     async patch<T = unknown>(params: BshClientFnParams<T>): Promise<BshResponse<T> | undefined> {
-        const authHeaders = await this.getAuthHeaders();
+        const authHeaders = await this.getAuthHeaders(params);
         const response = await this.httpClient({
             ...params,
             path: `${this.host}${params.path}`,
@@ -152,7 +200,7 @@ export class BshClient {
     }
 
     async download<T = unknown>(params: BshClientFnParams<T>): Promise<Blob | undefined> {
-        const authHeaders = await this.getAuthHeaders();
+        const authHeaders = await this.getAuthHeaders(params);
         const response = await this.httpClient({
             ...params,
             path: `${this.host}${params.path}`,

@@ -28,7 +28,11 @@ export const defaultClientFn: BshClientFn = async (params) => {
     );
 };
 
-export type BshAuthFn = () => Promise<{
+export type AuthToken = {
     type: 'JWT' | 'APIKEY';
     token: string
-} | undefined>;
+}
+
+export type BshAuthFn = () => Promise<AuthToken | undefined | null>;
+
+export type BshRefreshTokenFn = () => Promise<string | undefined | null>;
