@@ -30,22 +30,33 @@ jobs:
       - name: Build package
         run: npm run build
       
-      - name: Extract version from tag
+      - name: Extract version and npm tag from tag
         id: tag_version
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
+          echo "tag_name=$TAG_NAME"
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
-          # Remove 'v' prefix to get version
-          VERSION=${TAG_NAME#v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          # Check if it's a 3-part version (v*.*.*) or 4-part (v*.*.*.*)
-          if [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "is_latest=true" >> $GITHUB_OUTPUT
-            echo "npm_tag=latest" >> $GITHUB_OUTPUT
+
+          # Extract version and optional tag (v<version>[-<tag>])
+          if [[ "$TAG_NAME" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)(-(alpha|beta))?$ ]]; then
+            VERSION="${BASH_REMATCH[1]}"
+            TAG="${BASH_REMATCH[3]}"
           else
-            echo "is_latest=false" >> $GITHUB_OUTPUT
-            echo "npm_tag=$VERSION" >> $GITHUB_OUTPUT
+            echo "Tag format invalid: $TAG_NAME"
+            exit 1
           fi
+
+          echo "version=$VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+          if [[ -z "$TAG" ]]; then
+            NPM_TAG="latest"
+          else
+            NPM_TAG="$TAG"
+          fi
+
+          echo "npm_tag=$NPM_TAG"
+          echo "npm_tag=$NPM_TAG" >> $GITHUB_OUTPUT
         
       - name: Update package.json version
         run: |
@@ -58,11 +69,16 @@ jobs:
           VERSION=${{ steps.tag_version.outputs.version }}
           NPM_TAG=${{ steps.tag_version.outputs.npm_tag }}
           PACKAGE_NAME=$(node -p "require('./package.json').name")
-          echo "npm publish --tag $NPM_TAG --access public"
-          # npm publish --tag $NPM_TAG --access public
-          
-          # If it's a 3-part version, also tag as latest
-          if [ "${{ steps.tag_version.outputs.is_latest }}" == "true" ]; then
-            echo "npm dist-tag add $PACKAGE_NAME@$VERSION latest"
-            # npm dist-tag add $PACKAGE_NAME@$VERSION latest
+
+          if [ "$NPM_TAG" = "latest" ]; then
+            each "npm publish --tag $VERSION --access public"
+            # npm publish --tag $VERSION --access public
+            each "npm publish --tag latest --access public"
+            # npm publish --tag latest --access public
+          else
+            echo "Publishing as version: $VERSION-$NPM_TAG and tag: $NPM_TAG"
+            each "npm publish --tag $VERSION-$NPM_TAG --access public"
+            # npm publish --tag $VERSION-$NPM_TAG --access public
+            each "npm publish --tag $NPM_TAG --access public"
+            # npm publish --tag $NPM_TAG --access public
           fi
