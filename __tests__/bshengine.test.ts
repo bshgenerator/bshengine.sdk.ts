@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BshEngine } from '../src/bshengine';
-import { BshClientFn, BshAuthFn, BshPostInterceptor, BshPreInterceptor, BshErrorInterceptor } from '../src/client/types';
+import { BshClientFn, BshAuthFn, BshPostInterceptor, BshPreInterceptor, BshErrorInterceptor, BshRefreshTokenFn } from '../src/client/types';
 import { EntityService } from '../src/services/entities';
 import { AuthService } from '../src/services/auth';
 import { UserService } from '../src/services/user';
@@ -12,6 +12,7 @@ import { CachingService } from '../src/services/caching';
 import { ApiKeyService } from '../src/services/api-key';
 import { BshResponse } from '../src/types';
 import { BshError } from '../src/types';
+import { fetchClientFn } from '@client';
 
 // Mock the client module
 vi.mock('../src/client/bsh-client', () => {
@@ -38,10 +39,148 @@ describe('BshEngine', () => {
         engine = new BshEngine();
     });
 
-    describe('withHost', () => {
-        it('should set host and return engine instance', () => {
-            const result = engine.withHost('https://api.example.com');
-            expect(result).toBe(engine);
+    describe('constructor', () => {
+        it('should create engine with default values when no params provided', () => {
+            const engine = new BshEngine();
+            expect(engine).toBeInstanceOf(BshEngine);
+            expect(engine.getPostInterceptors()).toEqual([]);
+            expect(engine.getPreInterceptors()).toEqual([]);
+            expect(engine.getErrorInterceptors()).toEqual([]);
+        });
+
+        it('should initialize with host parameter', () => {
+            const engine = new BshEngine({ host: 'https://api.example.com' });
+            expect(engine).toBeInstanceOf(BshEngine);
+        });
+
+        it('should initialize with apiKey and set authFn to return APIKEY token', async () => {
+            const engine = new BshEngine({ apiKey: 'test-api-key' });
+            expect(engine).toBeInstanceOf(BshEngine);
+            
+            const authFn = (engine as any).authFn as BshAuthFn;
+            expect(authFn).toBeDefined();
+            expect(await authFn()).toEqual({ type: 'APIKEY', token: 'test-api-key' });
+        });
+
+        it('should initialize with jwtToken and set authFn to return JWT token', async () => {
+            const engine = new BshEngine({ jwtToken: 'test-jwt-token' });
+            expect(engine).toBeInstanceOf(BshEngine);
+
+            const authFn = (engine as any).authFn as BshAuthFn;
+            expect(authFn).toBeDefined();
+            expect(await authFn()).toEqual({ type: 'JWT', token: 'test-jwt-token' });
+        });
+
+        it('should initialize with refreshToken and set refreshTokenFn', async () => {
+            const engine = new BshEngine({ refreshToken: 'test-refresh-token' });
+            expect(engine).toBeInstanceOf(BshEngine);
+
+            const refreshTokenFn = (engine as any).refreshTokenFn as BshRefreshTokenFn;
+            expect(refreshTokenFn).toBeDefined();
+            expect(await refreshTokenFn()).toEqual('test-refresh-token');
+        });
+
+        it('should initialize with custom clientFn', () => {
+            const customClientFn = vi.fn();
+            const engine = new BshEngine({ clientFn: customClientFn });
+            expect(engine).toBeInstanceOf(BshEngine);
+            expect((engine as any).clientFn).toBe(customClientFn);
+        });
+
+        it('should use default fetchClientFn when clientFn is not provided', () => {
+            const engine = new BshEngine();
+            expect(engine).toBeInstanceOf(BshEngine);
+            expect((engine as any).clientFn).toBe(fetchClientFn);
+        });
+
+        it('should initialize with custom authFn', () => {
+            const customAuthFn = vi.fn().mockResolvedValue({ type: 'JWT', token: 'token' });
+            const engine = new BshEngine({ authFn: customAuthFn });
+            expect(engine).toBeInstanceOf(BshEngine);
+            expect((engine as any).authFn).toBe(customAuthFn);
+        });
+
+        it('should initialize with custom refreshTokenFn', () => {
+            const customRefreshTokenFn = vi.fn().mockResolvedValue('refresh-token');
+            const engine = new BshEngine({ refreshTokenFn: customRefreshTokenFn });
+            expect(engine).toBeInstanceOf(BshEngine);
+            expect((engine as any).refreshTokenFn).toBe(customRefreshTokenFn);
+        });
+
+        it('should initialize with postInterceptors array', () => {
+            const postInterceptor: BshPostInterceptor = vi.fn();
+            const engine = new BshEngine({ postInterceptors: [postInterceptor] });
+            expect(engine).toBeInstanceOf(BshEngine);
+            expect(engine.getPostInterceptors()).toHaveLength(1);
+            expect(engine.getPostInterceptors()[0]).toBe(postInterceptor);
+        });
+
+        it('should initialize with preInterceptors array', () => {
+            const preInterceptor: BshPreInterceptor = vi.fn();
+            const engine = new BshEngine({ preInterceptors: [preInterceptor] });
+            expect(engine).toBeInstanceOf(BshEngine);
+            expect(engine.getPreInterceptors()).toHaveLength(1);
+            expect(engine.getPreInterceptors()[0]).toBe(preInterceptor);
+        });
+
+        it('should initialize with errorInterceptors array', () => {
+            const errorInterceptor: BshErrorInterceptor = vi.fn();
+            const engine = new BshEngine({ errorInterceptors: [errorInterceptor] });
+            expect(engine).toBeInstanceOf(BshEngine);
+            expect(engine.getErrorInterceptors()).toHaveLength(1);
+            expect(engine.getErrorInterceptors()[0]).toBe(errorInterceptor);
+        });
+
+        it('should default to empty arrays when interceptors are not provided', () => {
+            const engine = new BshEngine();
+            expect(engine.getPostInterceptors()).toEqual([]);
+            expect(engine.getPreInterceptors()).toEqual([]);
+            expect(engine.getErrorInterceptors()).toEqual([]);
+        });
+
+        it('should initialize with all parameters', () => {
+            const postInterceptor: BshPostInterceptor = vi.fn();
+            const preInterceptor: BshPreInterceptor = vi.fn();
+            const errorInterceptor: BshErrorInterceptor = vi.fn();
+            const customClientFn = vi.fn();
+            const customAuthFn = vi.fn().mockResolvedValue({ type: 'JWT', token: 'token' });
+            const customRefreshTokenFn = vi.fn().mockResolvedValue('refresh-token');
+
+            const engine = new BshEngine({
+                host: 'https://api.example.com',
+                apiKey: 'test-key',
+                refreshToken: 'refresh-token',
+                clientFn: customClientFn,
+                authFn: customAuthFn,
+                refreshTokenFn: customRefreshTokenFn,
+                postInterceptors: [postInterceptor],
+                preInterceptors: [preInterceptor],
+                errorInterceptors: [errorInterceptor]
+            });
+
+            expect(engine).toBeInstanceOf(BshEngine);
+            expect(engine.getPostInterceptors()).toHaveLength(1);
+            expect(engine.getPreInterceptors()).toHaveLength(1);
+            expect(engine.getErrorInterceptors()).toHaveLength(1);
+
+            expect((engine as any).host).toBe('https://api.example.com');
+            expect((engine as any).clientFn).toBe(customClientFn);
+            expect((engine as any).authFn).toBe(customAuthFn);
+            expect((engine as any).refreshTokenFn).toBe(customRefreshTokenFn);
+            expect(engine.getPostInterceptors()).toHaveLength(1);
+            expect(engine.getPreInterceptors()).toHaveLength(1);
+            expect(engine.getErrorInterceptors()).toHaveLength(1);
+        });
+
+        it('should prioritize jwtToken over apiKey when both are provided', async () => {
+            const engine = new BshEngine({
+                apiKey: 'api-key',
+                jwtToken: 'jwt-token'
+            });
+            expect(engine).toBeInstanceOf(BshEngine);
+            const authFn = (engine as any).authFn as BshAuthFn;
+            expect(authFn).toBeDefined();
+            expect(await authFn()).toEqual({ type: 'JWT', token: 'jwt-token' });
         });
     });
 
@@ -152,7 +291,6 @@ describe('BshEngine', () => {
     describe('chaining', () => {
         it('should allow method chaining', () => {
             const result = engine
-                .withHost('https://api.example.com')
                 .withClient(mockClientFn)
                 .withAuth(mockAuthFn);
             
