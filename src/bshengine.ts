@@ -25,12 +25,12 @@ export class BshEngine {
         errorInterceptors?: BshErrorInterceptor<unknown>[];
     } = {}) {
         this.host = params.host;
-        if (params.apiKey) this.authFn = async () => ({ type: 'APIKEY', token: params.apiKey! });
-        if (params.jwtToken) this.authFn = async () => ({ type: 'JWT', token: params.jwtToken! });
+        if (params.apiKey && !params.authFn) this.authFn = async () => ({ type: 'APIKEY', token: params.apiKey! });
+        if (params.jwtToken && !params.authFn) this.authFn = async () => ({ type: 'JWT', token: params.jwtToken! });
         if (params.refreshToken) this.refreshTokenFn = async () => params.refreshToken!;
-        this.clientFn = params.clientFn || fetchClientFn;
-        this.authFn = params.authFn;
-        this.refreshTokenFn = params.refreshTokenFn;
+        this.clientFn = params.clientFn || this.clientFn || fetchClientFn;
+        this.authFn = params.authFn || this.authFn;
+        this.refreshTokenFn = params.refreshTokenFn || this.refreshTokenFn;
         this.postInterceptors = params.postInterceptors || [];
         this.preInterceptors = params.preInterceptors || [];
         this.errorInterceptors = params.errorInterceptors || [];
