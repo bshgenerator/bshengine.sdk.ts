@@ -75,7 +75,7 @@ export class BshClient {
         const accessToken = auth.token;
         try {
             const tokenPayload = JSON.parse(atob(accessToken.split('.')[1] || ''));
-            const exp = tokenPayload.exp;
+            const exp = tokenPayload.exp * 1000;
             const now = new Date().getTime();
 
             if (exp && now < exp) return auth;
