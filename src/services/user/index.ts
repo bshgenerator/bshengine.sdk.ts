@@ -97,8 +97,8 @@ export class UserService {
         });
     }
 
-    public async search(params: BshCallbackParamsWithPayload<BshSearch<BshUser> | undefined, BshUser>): Promise<BshResponse<BshUser> | undefined> {
-        return this.client.post<BshUser>({
+    public async search<R = BshUser>(params: BshCallbackParamsWithPayload<BshSearch<BshUser> | undefined, R>): Promise<BshResponse<R> | undefined> {
+        return this.client.post<BshUser, R>({
             path: `${this.baseEndpoint}/search`,
             options: {
                 responseType: 'json',
