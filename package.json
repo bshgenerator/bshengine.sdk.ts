@@ -54,7 +54,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bshgenerator/bshengine.sdk.ts"
+    "url": "git+https://github.com/bshgenerator/bshengine.sdk.ts.git"
   },
   "homepage": "https://engine.bousalih.com",
   "publishConfig": {
