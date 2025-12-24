@@ -27,7 +27,19 @@ export class BshClient {
     private async handleResponse<T = any>(response: Response, params: BshClientFnParams<T>, type: 'blob'): Promise<Blob | undefined>
     private async handleResponse<T = any>(response: Response, params: BshClientFnParams<T>, type: 'json' | 'blob'): Promise<BshResponse<T> | Blob | undefined> {
         if (!response.ok) {
-            let error = new BshError(response.status, params.path, await response.json());
+            let data: any = undefined;
+            try {
+                data = await response.json();
+            } catch (error) {
+                try {
+                    data = await response.text();
+                } catch (error) {
+                    data = {
+                        message: 'Connection Issue'
+                    };
+                }
+            }
+            let error = new BshError(response.status, params.path, data);
             if (this.bshEngine?.getErrorInterceptors().length) {
                 for (const interceptor of this.bshEngine.getErrorInterceptors()) {
                     const newError = await interceptor(error, error.response, params as BshClientFnParams<any>);
