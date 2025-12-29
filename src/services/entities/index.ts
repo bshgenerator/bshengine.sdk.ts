@@ -25,6 +25,7 @@ export class EntityService<T = unknown> {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: `entities.${params.entity || this.entity}.findById`,
+            entity: params.entity || this.entity,
         });
     }
 
@@ -44,6 +45,7 @@ export class EntityService<T = unknown> {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: `entities.${params.entity || this.entity}.create`,
+            entity: params.entity || this.entity,
         });
     }
 
@@ -63,6 +65,7 @@ export class EntityService<T = unknown> {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: `entities.${params.entity || this.entity}.createMany`,
+            entity: params.entity || this.entity,
         });
     }
 
@@ -82,6 +85,7 @@ export class EntityService<T = unknown> {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: `entities.${params.entity || this.entity}.update`,
+            entity: params.entity || this.entity,
         });
     }
 
@@ -101,6 +105,7 @@ export class EntityService<T = unknown> {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: `entities.${params.entity || this.entity}.updateMany`,
+            entity: params.entity || this.entity,
         });
     }
 
@@ -120,6 +125,7 @@ export class EntityService<T = unknown> {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: `entities.${params.entity || this.entity}.delete`,
+            entity: params.entity || this.entity,
         });
     }
 
@@ -139,6 +145,7 @@ export class EntityService<T = unknown> {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: `entities.${params.entity || this.entity}.delete`,
+            entity: params.entity || this.entity,
         });
     }
 
@@ -157,6 +164,7 @@ export class EntityService<T = unknown> {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: `entities.${params.entity || this.entity}.deleteById`,
+            entity: params.entity || this.entity,
         });
     }
 
@@ -175,6 +183,7 @@ export class EntityService<T = unknown> {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: `entities.${params.entity || this.entity}.columns`,
+            entity: params.entity || this.entity,
         });
     }
 
@@ -193,6 +202,7 @@ export class EntityService<T = unknown> {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: `entities.${params.entity || this.entity}.count`,
+            entity: params.entity || this.entity,
         });
     }
 
@@ -212,6 +222,7 @@ export class EntityService<T = unknown> {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: `entities.${params.entity || this.entity}.countBySearch`,
+            entity: params.entity || this.entity,
         });
     }
 
@@ -237,6 +248,7 @@ export class EntityService<T = unknown> {
             },
             bshOptions: { onDownload: params.onDownload, onError: params.onError },
             api: `entities.${params.entity || this.entity}.export`,
+            entity: params.entity || this.entity,
         });
     }
 }

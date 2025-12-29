@@ -1,6 +1,7 @@
 import { BshClient } from "@src/client/bsh-client";
-import { BshResponse, BshApiKeys, BshApiKeysForm, BshSearch } from "@types";
-import { BshCallbackParams, BshCallbackParamsWithPayload, BshSearchCallbackParams, EntitySearchFnParams } from "@src/services";
+import { BshResponse, BshApiKeys, BshApiKeysForm } from "@types";
+import { BshCallbackParams, BshCallbackParamsWithPayload, BshSearchCallbackParams } from "@src/services";
+import { CoreEntities } from "@src/types/core";
 
 export class ApiKeyService {
     private readonly baseEndpoint = '/api/api-keys';
@@ -17,9 +18,10 @@ export class ApiKeyService {
                 body: params.payload,
                 headers: {
                     'Content-Type': 'application/json',
-                },
+                }
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            entity: CoreEntities.BshApiKeys,
             api: 'api-key.create',
         });
     }
@@ -32,6 +34,8 @@ export class ApiKeyService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            entity: CoreEntities.BshApiKeys,
+            api: 'api-key.details',
         });
     }
 
@@ -43,6 +47,7 @@ export class ApiKeyService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            entity: CoreEntities.BshApiKeys,
             api: 'api-key.revoke',
         });
     }
@@ -56,6 +61,7 @@ export class ApiKeyService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            entity: CoreEntities.BshApiKeys,
             api: 'api-key.getById',
         });
     }
@@ -72,6 +78,7 @@ export class ApiKeyService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            entity: CoreEntities.BshApiKeys,
             api: 'api-key.search',
         });
     }
@@ -100,6 +107,7 @@ export class ApiKeyService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            entity: CoreEntities.BshApiKeys,
             api: 'api-key.list',
         });
     }
@@ -112,6 +120,7 @@ export class ApiKeyService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            entity: CoreEntities.BshApiKeys,
             api: 'api-key.deleteById',
         });
     }
@@ -126,6 +135,7 @@ export class ApiKeyService {
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            entity: CoreEntities.BshApiKeys,
             api: 'api-key.count',
         });
     }
@@ -142,6 +152,7 @@ export class ApiKeyService {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            entity: CoreEntities.BshApiKeys,
             api: 'api-key.countFiltered',
         });
     }

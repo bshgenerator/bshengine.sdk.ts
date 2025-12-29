@@ -13,7 +13,8 @@ export type BshClientFnParams<T = unknown, R = T> = {
         headers?: Record<string, string>,
     },
     bshOptions: BshCallbackParams<T, R>,
-    api?: string
+    api?: string,
+    entity?: string
 }
 
 export type BshClientFn = <T = unknown>(params: BshClientFnParams<T>) => Promise<Response>;

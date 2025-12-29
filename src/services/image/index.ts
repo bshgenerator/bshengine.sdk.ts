@@ -1,6 +1,7 @@
 import { BshClient } from "@src/client/bsh-client";
 import { BshResponse, UploadResponse, UploadOptions } from "@types";
-import { BshCallbackParams, BshCallbackParamsWithPayload } from "@src/services";
+import { BshCallbackParamsWithPayload } from "@src/services";
+import { CoreEntities } from "@src/types/core";
 
 export class ImageService {
     private readonly baseEndpoint = '/api/images';
@@ -29,6 +30,7 @@ export class ImageService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'image.upload',
+            entity: CoreEntities.BshFiles,
         });
     }
 }

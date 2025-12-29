@@ -2,6 +2,7 @@
 import { BshClient } from "@src/client/bsh-client";
 import { BshResponse, BshUser, BshUserInit, LoginParams, AuthTokens } from "@types";
 import { BshCallbackParamsWithPayload } from "@src/services";
+import { CoreEntities } from "@src/types/core";
 
 export class AuthService {
     private readonly baseEndpoint = '/api/auth';
@@ -38,6 +39,7 @@ export class AuthService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'auth.register',
+            entity: CoreEntities.BshUsers,
         });
     }
 

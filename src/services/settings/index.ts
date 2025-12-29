@@ -1,6 +1,7 @@
 import { BshClient } from "@src/client/bsh-client";
 import { BshResponse, BshSettings } from "@types";
 import { BshCallbackParams, BshCallbackParamsWithPayload } from "@src/services";
+import { CoreEntities } from "@src/types/core";
 
 export class SettingsService {
     private readonly baseEndpoint = '/api/settings';
@@ -17,6 +18,7 @@ export class SettingsService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'settings.load',
+            entity: CoreEntities.BshConfigurations,
         });
     }
 
@@ -33,6 +35,7 @@ export class SettingsService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'settings.update',
+            entity: CoreEntities.BshConfigurations,
         });
     }
 }

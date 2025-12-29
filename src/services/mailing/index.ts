@@ -1,6 +1,7 @@
 import { BshClient } from "@src/client/bsh-client";
 import { BshResponse, MailingPayload } from "@types";
 import { BshCallbackParamsWithPayload } from "@src/services";
+import { CoreEntities } from "@src/types/core";
 
 export class MailingService {
     private readonly baseEndpoint = '/api/mailing';
@@ -21,6 +22,7 @@ export class MailingService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'mailing.send',
+            entity: CoreEntities.BshEmails,
         });
     }
 }

@@ -1,6 +1,7 @@
 import { BshClient } from "@src/client/bsh-client";
 import { BshResponse, BshUser, BshUserInit, BshSearch } from "@types";
 import { BshCallbackParams, BshCallbackParamsWithPayload, BshSearchCallbackParams } from "@src/services";
+import { CoreEntities } from "@src/types/core";
 
 export class UserService {
     private readonly baseEndpoint = '/api/users';
@@ -17,6 +18,7 @@ export class UserService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'user.me',
+            entity: CoreEntities.BshUsers,
         });
     }
 
@@ -33,6 +35,7 @@ export class UserService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'user.init',
+            entity: CoreEntities.BshUsers,
         });
     }
 
@@ -49,6 +52,7 @@ export class UserService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'user.updateProfile',
+            entity: CoreEntities.BshUsers,
         });
     }
 
@@ -65,6 +69,7 @@ export class UserService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'user.updatePicture',
+            entity: CoreEntities.BshUsers,
         });
     }
 
@@ -81,6 +86,7 @@ export class UserService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'user.updatePassword',
+            entity: CoreEntities.BshUsers,
         });
     }
 
@@ -94,6 +100,7 @@ export class UserService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'user.getById',
+            entity: CoreEntities.BshUsers,
         });
     }
 
@@ -110,6 +117,7 @@ export class UserService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'user.search',
+            entity: CoreEntities.BshUsers,
         });
     }
 
@@ -138,6 +146,7 @@ export class UserService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'user.list',
+            entity: CoreEntities.BshUsers,
         });
     }
 
@@ -154,6 +163,7 @@ export class UserService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'user.update',
+            entity: CoreEntities.BshUsers,
         });
     }
 
@@ -166,6 +176,7 @@ export class UserService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'user.deleteById',
+            entity: CoreEntities.BshUsers,
         });
     }
 
@@ -180,6 +191,7 @@ export class UserService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'user.count',
+            entity: CoreEntities.BshUsers,
         });
     }
 
@@ -196,6 +208,7 @@ export class UserService {
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
             api: 'user.countFiltered',
+            entity: CoreEntities.BshUsers,
         });
     }    
 }
