@@ -124,7 +124,7 @@ export class EntityService<T = unknown> {
                 },
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
-            api: `entities.${params.entity || this.entity}.delete`,
+            api: `entities.${params.entity || this.entity}.search`,
             entity: params.entity || this.entity,
         });
     }

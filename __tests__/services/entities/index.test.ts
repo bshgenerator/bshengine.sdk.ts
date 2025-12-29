@@ -281,7 +281,7 @@ describe('EntityService', () => {
                 },
                 bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
                 entity: 'TestEntity',
-                api: 'entities.TestEntity.delete',
+                api: 'entities.TestEntity.search',
             });
             expect(result).toEqual(mockResponse);
         });
