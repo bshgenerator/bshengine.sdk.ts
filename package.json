@@ -21,11 +21,6 @@
       "import": "./dist/services/index.js",
       "require": "./dist/services/index.js"
     },
-    "./services/core": {
-      "types": "./dist/services/core/index.d.ts",
-      "import": "./dist/services/core/index.js",
-      "require": "./dist/services/core/index.js"
-    },
     "./types": {
       "types": "./dist/types/index.d.ts",
       "import": "./dist/types/index.js",

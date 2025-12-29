@@ -36,7 +36,7 @@ export const CoreEntities = {
 
 export type CoreEntities = keyof typeof CoreEntities
 
-export const PluginBasedEntities: CoreEntities[] = [
+export const PluginBasedEntities: string[] = [
     CoreEntities.BshEntities,
     CoreEntities.BshSchemas,
     CoreEntities.BshTypes,
