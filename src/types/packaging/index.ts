@@ -8,5 +8,6 @@ export type BshPlugin = {
     author: string
     license: string
     lastInstalledAt: BshDate
-    variables: Record<string, unknown>
+    variables: Record<string, unknown>,
+    image: string;
 } & BshObject;
