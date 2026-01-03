@@ -13,7 +13,7 @@ export type BshEventLogs = {
 
 export type BshTrigger<Event = BshTriggerEvent> = {
     name: string
-    displayName: string
+    label: string
     criteria?: string
     entity: string
     action: ('READ' | 'INSERT' | 'UPDATE' | 'SEARCH' | 'DELETE' | 'COLUMNS' | 'EXPORT')[]
@@ -26,7 +26,7 @@ export type BshTriggerPure = BshObjectPure<BshTrigger<BshTriggerEventPure>>
 
 export type BshTriggerEvent = {
     name: string
-    plugin: string
+    function: string
     entity?: string
     criteria?: string
     input?: object
@@ -49,7 +49,7 @@ export type BshTriggerInstance = {
     trac?: string
 } & BshObject;
 
-export type BshTriggerPlugin = {
+export type BshTriggerFunction = {
     name: string
     category: string
     input: object /*json schema*/

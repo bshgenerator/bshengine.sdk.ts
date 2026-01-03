@@ -1,5 +1,5 @@
 import { BshClient } from "@src/client/bsh-client";
-import { BshResponse, BshTriggerPlugin, BshTriggerAction } from "@types";
+import { BshResponse, BshTriggerFunction, BshTriggerAction } from "@types";
 import { BshCallbackParams } from "@src/services";
 
 export class BshUtilsService {
@@ -8,15 +8,15 @@ export class BshUtilsService {
     public constructor(private readonly client: BshClient) {
     }
 
-    public async triggerPlugins(params: BshCallbackParams<unknown, BshTriggerPlugin>): Promise<BshResponse<BshTriggerPlugin> | undefined> {
-        return this.client.get<BshTriggerPlugin>({
-            path: `${this.baseEndpoint}/triggers/plugins`,
+    public async triggerFunctions(params: BshCallbackParams<unknown, BshTriggerFunction>): Promise<BshResponse<BshTriggerFunction> | undefined> {
+        return this.client.get<BshTriggerFunction>({
+            path: `${this.baseEndpoint}/triggers/functions`,
             options: {
                 responseType: 'json',
                 requestFormat: 'json',
             },
             bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
-            api: 'utils.triggerPlugins',
+            api: 'utils.triggerFunctions',
         });
     }
 

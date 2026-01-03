@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BshUtilsService } from '../../../src/services/utils';
 import { BshClient } from '../../../src/client/bsh-client';
-import { BshTriggerPlugin, BshTriggerAction } from '../../../src/types';
+import { BshTriggerFunction, BshTriggerAction } from '../../../src/types';
 
 describe('BshUtilsService', () => {
     let utilsService: BshUtilsService;
@@ -23,7 +23,7 @@ describe('BshUtilsService', () => {
 
     describe('triggerPlugins', () => {
         it('should call client.get with correct parameters', async () => {
-            const mockPlugin: BshTriggerPlugin = {
+            const mockPlugin: BshTriggerFunction = {
                 name: 'Test Plugin',
                 category: 'test',
                 input: {},
@@ -43,16 +43,16 @@ describe('BshUtilsService', () => {
                 onError: vi.fn()
             };
 
-            const result = await utilsService.triggerPlugins(params);
+            const result = await utilsService.triggerFunctions(params);
 
             expect(mockGet).toHaveBeenCalledWith({
-                path: '/api/utils/triggers/plugins',
+                path: '/api/utils/triggers/functions',
                 options: {
                     responseType: 'json',
                     requestFormat: 'json',
                 },
                 bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
-                api: 'utils.triggerPlugins',
+                api: 'utils.triggerFunctions',
             });
             expect(result).toEqual(mockResponse);
         });
