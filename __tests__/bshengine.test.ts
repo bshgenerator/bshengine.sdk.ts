@@ -241,7 +241,7 @@ describe('BshEngine', () => {
 
     describe('user', () => {
         it('should return UserService instance', () => {
-            const user = engine.user;
+            const user = engine.users;
             expect(user).toBeInstanceOf(UserService);
         });
     });

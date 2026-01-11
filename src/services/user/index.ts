@@ -39,6 +39,23 @@ export class UserService {
         });
     }
 
+    public async invite(params: BshCallbackParamsWithPayload<{ email: string, roles?: string[] }, { message: string }>): Promise<BshResponse<{ message: string }> | undefined> {
+        return this.client.post<{ message: string }>({
+            path: `${this.baseEndpoint}/invite`,
+            options: {
+                responseType: 'json',
+                requestFormat: 'json',
+                body: params.payload,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            },
+            bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'user.invite',
+            entity: CoreEntities.BshUsers,
+        });
+    }
+
     public async updateProfile<T = BshUser>(params: BshCallbackParamsWithPayload<Partial<BshUser['profile']>, T>): Promise<BshResponse<T> | undefined> {
         return this.client.put<T>({
             path: `${this.baseEndpoint}/profile`,

@@ -118,7 +118,7 @@ export class BshEngine {
         return new AuthService(this.client);
     }
 
-    public get user() {
+    public get users() {
         return new UserService(this.client);
     }
 

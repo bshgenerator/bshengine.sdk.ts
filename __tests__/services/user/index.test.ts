@@ -119,6 +119,85 @@ describe('UserService', () => {
         });
     });
 
+    describe('invite', () => {
+        it('should call client.post with correct parameters', async () => {
+            const mockResponse = {
+                data: [{ message: 'Invitation sent successfully' }],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockPost.mockResolvedValue(mockResponse);
+
+            const invitePayload = {
+                email: 'invitee@example.com',
+                roles: ['user', 'admin']
+            };
+            const params = {
+                payload: invitePayload,
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
+
+            const result = await userService.invite(params);
+
+            expect(mockPost).toHaveBeenCalledWith({
+                path: '/api/users/invite',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                    body: invitePayload,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+                entity: CoreEntities.BshUsers,
+                api: 'user.invite',
+            });
+            expect(result).toEqual(mockResponse);
+        });
+
+        it('should call client.post without roles', async () => {
+            const mockResponse = {
+                data: [{ message: 'Invitation sent successfully' }],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockPost.mockResolvedValue(mockResponse);
+
+            const invitePayload = {
+                email: 'invitee@example.com'
+            };
+            const params = {
+                payload: invitePayload,
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
+
+            const result = await userService.invite(params);
+
+            expect(mockPost).toHaveBeenCalledWith({
+                path: '/api/users/invite',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                    body: invitePayload,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+                entity: CoreEntities.BshUsers,
+                api: 'user.invite',
+            });
+            expect(result).toEqual(mockResponse);
+        });
+    });
+
     describe('updateProfile', () => {
         it('should call client.put with correct parameters', async () => {
             const mockUser: BshUser = {
