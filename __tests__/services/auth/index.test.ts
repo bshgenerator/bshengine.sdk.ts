@@ -283,5 +283,42 @@ describe('AuthService', () => {
             expect(result).toEqual(mockResponse);
         });
     });
+
+    describe('resendActivationEmail', () => {
+        it('should call client.post with correct parameters', async () => {
+            const mockResponse = {
+                data: [{}],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockPost.mockResolvedValue(mockResponse);
+
+            const params = {
+                payload: { email: 'test@example.com' },
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
+
+            const result = await authService.resendActivationEmail(params);
+
+            expect(mockPost).toHaveBeenCalledWith({
+                path: '/api/auth/resend-activation-email',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                    body: params.payload,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+                api: 'auth.resendActivationEmail',
+                entity: CoreEntities.BshUsers,
+            });
+            expect(result).toEqual(mockResponse);
+        });
+    });
 });
 

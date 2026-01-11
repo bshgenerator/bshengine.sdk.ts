@@ -107,4 +107,21 @@ export class AuthService {
             api: 'auth.activateAccount',
         });
     }
+
+    public async resendActivationEmail(params: BshCallbackParamsWithPayload<{ email: string }, unknown>): Promise<BshResponse<unknown> | undefined> {
+        return this.client.post<unknown>({
+            path: `${this.baseEndpoint}/resend-activation-email`,
+            options: {
+                responseType: 'json',
+                requestFormat: 'json',
+                body: params.payload,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            },
+            bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+            api: 'auth.resendActivationEmail',
+            entity: CoreEntities.BshUsers,
+        });
+    }
 }
