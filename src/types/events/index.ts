@@ -47,6 +47,7 @@ export type BshTriggerInstance = {
     status: 'InProgress' | 'Success' | 'Failed'
     error?: string
     trac?: string
+    entityUpdateError?: object
 } & BshObject;
 
 export type BshTriggerFunction = {
