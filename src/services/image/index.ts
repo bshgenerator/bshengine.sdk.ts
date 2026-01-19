@@ -11,14 +11,14 @@ export class ImageService {
 
     public async upload(params: BshCallbackParamsWithPayload<{
         file: File;
-        namespace?: string;
-        assetId?: string;
+        folder?: string;
+        filename?: string;
         options?: UploadOptions;
     }, UploadResponse>): Promise<BshResponse<UploadResponse> | undefined> {
         const formData = new FormData();
         formData.set('file', params.payload.file);
-        if (params.payload.namespace) formData.set('namespace', params.payload.namespace);
-        if (params.payload.assetId) formData.set('assetId', params.payload.assetId);
+        if (params.payload.folder) formData.set('folder', params.payload.folder);
+        if (params.payload.filename) formData.set('filename', params.payload.filename);
         if (params.payload.options) formData.set('options', JSON.stringify(params.payload.options));
 
         return this.client.post<UploadResponse>({

@@ -1,4 +1,4 @@
-import {BshObject, BshConfigurations} from '@types';
+import { BshObject, BshConfigurations } from '@types';
 
 export type StorageProvider = 'cloudinary';
 
@@ -13,18 +13,20 @@ export type StorageConfiguration = BshConfigurations & {
 }
 
 export type BshFiles = {
-    uri: string,
-    folder: string,
-    secureUri: string,
-    tags?: string[],
-    assetId: string,
-    bytes: number,
-    context?: { [key: string]: string },
-    publicId: string,
-    fileId: string,
-    width: number,
-    height: number,
-    format: string,
+    storageId: string;
+    id: string;
+    filename: string;
+    mediaType: string;
+    uri: string;
+    secureUri: string;
+    bytes: number;
+    format: string;
+    folder: string;
+    width: number;
+    height: number;
+    tags: string[];
+    context: { [key: string]: unknown };
+    fileId: string;
 } & BshObject
 
 export type UploadOptions = {
