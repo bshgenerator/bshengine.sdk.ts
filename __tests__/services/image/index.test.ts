@@ -61,7 +61,7 @@ describe('ImageService', () => {
             expect(result).toEqual(mockResponse);
         });
 
-        it('should include namespace in FormData when provided', async () => {
+        it('should include folder in FormData when provided', async () => {
             const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
             const mockUploadResponse: UploadResponse = {
                 fileId: 'image-123',
@@ -84,7 +84,7 @@ describe('ImageService', () => {
             const params = {
                 payload: {
                     file: mockFile,
-                    namespace: 'user-avatars'
+                    folder: 'user-avatars'
                 },
                 onSuccess: vi.fn(),
                 onError: vi.fn()
@@ -94,10 +94,10 @@ describe('ImageService', () => {
 
             const callArgs = mockPost.mock.calls[0][0];
             const formData = callArgs.options.body as FormData;
-            expect(formData.get('namespace')).toBe('user-avatars');
+            expect(formData.get('folder')).toBe('user-avatars');
         });
 
-        it('should include assetId in FormData when provided', async () => {
+        it('should include filename in FormData when provided', async () => {
             const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
             const mockUploadResponse: UploadResponse = {
                 fileId: 'image-123',
@@ -120,7 +120,7 @@ describe('ImageService', () => {
             const params = {
                 payload: {
                     file: mockFile,
-                    assetId: 'asset-456'
+                    filename: 'custom-name.jpg'
                 },
                 onSuccess: vi.fn(),
                 onError: vi.fn()
@@ -130,7 +130,7 @@ describe('ImageService', () => {
 
             const callArgs = mockPost.mock.calls[0][0];
             const formData = callArgs.options.body as FormData;
-            expect(formData.get('assetId')).toBe('asset-456');
+            expect(formData.get('filename')).toBe('custom-name.jpg');
         });
 
         it('should include options in FormData when provided', async () => {
