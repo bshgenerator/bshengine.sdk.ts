@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BshUtilsService } from '../../../src/services/utils';
 import { BshClient } from '../../../src/client/bsh-client';
-import { BshTriggerFunction, BshTriggerAction } from '../../../src/types';
+import { BshTriggerFunction, BshTriggerAction, SecretSource } from '../../../src/types';
 
 describe('BshUtilsService', () => {
     let utilsService: BshUtilsService;
@@ -88,6 +88,84 @@ describe('BshUtilsService', () => {
                 },
                 bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
                 api: 'utils.triggerActions',
+            });
+            expect(result).toEqual(mockResponse);
+        });
+    });
+
+    describe('secrets', () => {
+        it('should call client.get with default source "env" when source is not provided', async () => {
+            const mockSecretSource: SecretSource = {
+                id: 'env-1',
+                name: 'Environment Variables',
+                prefix: 'ENV_',
+                secrets: {
+                    API_KEY: 'test-api-key',
+                    DATABASE_URL: 'postgres://localhost:5432/test'
+                }
+            };
+            const mockResponse = {
+                data: mockSecretSource,
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockGet.mockResolvedValue(mockResponse);
+
+            const params = {
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
+
+            const result = await utilsService.secrets(params);
+
+            expect(mockGet).toHaveBeenCalledWith({
+                path: '/api/utils/secrets/env',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+                api: 'utils.secretsEnv',
+            });
+            expect(result).toEqual(mockResponse);
+        });
+
+        it('should call client.get with custom source when provided', async () => {
+            const mockSecretSource: SecretSource = {
+                id: 'vault-1',
+                name: 'Vault Secrets',
+                prefix: 'VAULT_',
+                secrets: {
+                    SECRET_KEY: 'vault-secret-value'
+                }
+            };
+            const mockResponse = {
+                data: mockSecretSource,
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockGet.mockResolvedValue(mockResponse);
+
+            const params = {
+                onSuccess: vi.fn(),
+                onError: vi.fn(),
+                source: 'vault'
+            };
+
+            const result = await utilsService.secrets(params);
+
+            expect(mockGet).toHaveBeenCalledWith({
+                path: '/api/utils/secrets/vault',
+                options: {
+                    responseType: 'json',
+                    requestFormat: 'json',
+                },
+                bshOptions: { onSuccess: params.onSuccess, onError: params.onError },
+                api: 'utils.secretsEnv',
             });
             expect(result).toEqual(mockResponse);
         });

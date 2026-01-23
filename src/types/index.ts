@@ -13,7 +13,8 @@ export * from './config';
 export * from './email';
 export * from './storage';
 export * from './cache';
-export * from  './packaging'
+export * from  './packaging';
+export * from './secrets';
 
 // Auth types
 export * from './auth';
