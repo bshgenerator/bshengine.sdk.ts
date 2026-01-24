@@ -32,6 +32,7 @@ export const CoreEntities = {
     BshTriggerInstances: 'BshTriggerInstances',
 
     BshPlugins: 'BshPlugins',
+    BshPluginHistory: 'BshPluginHistory',
 } as const;
 
 export type CoreEntities = keyof typeof CoreEntities
