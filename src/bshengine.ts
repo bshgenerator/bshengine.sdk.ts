@@ -2,6 +2,7 @@ import { BshAuthFn, BshClient, BshClientFn, BshErrorInterceptor, BshPostIntercep
 import { ApiKeyService, AuthService, BshUtilsService, CachingService, EntityService, ImageService, MailingService, SettingsService, UserService } from "@src/services";
 import { BshEntities, BshPolicy,BshRole, BshEmailTemplate, BshEventLogs, BshSchemas, BshTypes, BshUser, SentEmail, BshTrigger, BshTriggerInstance, BshFiles, BshConfigurations, BshPlugin } from "@types";
 import { PluginService } from "./services/plugins";
+import { StatusService } from "./services/status";
 
 export class BshEngine {
     private host?: string;
@@ -149,5 +150,9 @@ export class BshEngine {
 
     public get plugins() {
         return new PluginService(this.client);
+    }
+
+    public get status() {
+        return new StatusService(this.client);
     }
 }

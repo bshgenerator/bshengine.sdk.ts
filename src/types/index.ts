@@ -15,6 +15,7 @@ export * from './storage';
 export * from './cache';
 export * from  './packaging';
 export * from './secrets';
+export * from './status';
 
 // Auth types
 export * from './auth';
