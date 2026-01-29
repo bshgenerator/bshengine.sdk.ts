@@ -123,4 +123,88 @@ describe('PluginService', () => {
             expect(callArgs.bshOptions.onError).toBe(onError);
         });
     });
+
+    describe('installCore', () => {
+        const mockPayload: PluginInstalledResponse = {
+            history: 1,
+            pluginId: 'core-plugin-123',
+            pluginName: 'core-plugin',
+            totalFiles: 15,
+            successCount: 15,
+            failedCount: 0,
+        };
+
+        it('should call client.post with correct parameters', async () => {
+            const mockResponse = {
+                data: [mockPayload],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockPost.mockResolvedValue(mockResponse);
+
+            const params = {
+                payload: mockPayload,
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            };
+
+            const result = await pluginService.installCore(params);
+
+            expect(mockPost).toHaveBeenCalled();
+            const callArgs = mockPost.mock.calls[0][0];
+            expect(callArgs.path).toBe('/api/plugins/install/core');
+            expect(callArgs.options.responseType).toBe('json');
+            expect(callArgs.bshOptions).toEqual({ onSuccess: params.onSuccess, onError: params.onError });
+            expect(callArgs.api).toBe('plugins.installZip');
+            expect(callArgs.entity).toBe(CoreEntities.BshPlugins);
+            expect(result).toEqual(mockResponse);
+        });
+
+        it('should pass callbacks to bshOptions', async () => {
+            const mockResponse = {
+                data: [],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockPost.mockResolvedValue(mockResponse);
+
+            const onSuccess = vi.fn();
+            const onError = vi.fn();
+
+            await pluginService.installCore({
+                payload: mockPayload,
+                onSuccess,
+                onError
+            });
+
+            const callArgs = mockPost.mock.calls[0][0];
+            expect(callArgs.bshOptions.onSuccess).toBe(onSuccess);
+            expect(callArgs.bshOptions.onError).toBe(onError);
+        });
+
+        it('should not include requestFormat or body in options', async () => {
+            const mockResponse = {
+                data: [],
+                code: 200,
+                status: 'OK',
+                error: '',
+                timestamp: Date.now()
+            };
+            mockPost.mockResolvedValue(mockResponse);
+
+            await pluginService.installCore({
+                payload: mockPayload,
+                onSuccess: vi.fn(),
+                onError: vi.fn()
+            });
+
+            const callArgs = mockPost.mock.calls[0][0];
+            expect(callArgs.options.requestFormat).toBeUndefined();
+            expect(callArgs.options.body).toBeUndefined();
+        });
+    });
 });
